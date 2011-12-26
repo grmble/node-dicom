@@ -1,0 +1,30 @@
+{
+    "author": "Juergen Gmeiner"
+    , "name": "node-dicom"
+    , "description": "DICOM for node-js"
+    , "version": "0.0.0"
+    , "repository": {
+        "type": "git"
+        , "url": "/home/gj/Dropbox/git/node-js/node-dicom.git/"
+    }
+    , "main": "lib/dicom-decoder.js"
+    , "scripts": {
+        "test": "nodeunit test"
+    }
+    , "engines": {
+        "node": "~0.6.6"
+    }
+    , "dependencies": {
+        "binary": "~0.2.6"
+        , "ap": "~0.0.1"
+        , "sax-js": "~0.0.0"
+        , "hashish": "~0.0.4"
+        , "seq": "~0.3.5"
+    }
+    , "devDependencies": {
+        "nodeunit": "0.6.x"
+    }
+    , "directories": {
+        "lib": "./lib"
+    }
+}
