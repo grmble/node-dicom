@@ -1,4 +1,18 @@
 var parsebuffer = require('../lib/parsebuffer');
+var assert = require('assert');
+
+var log4js = require('log4js');
+var log = log4js.getLogger('test-parsebuffer');
+
+function myDeepEqual(a,b) {
+	try {
+		assert.deepEqual(a,b);
+		return true;
+	} catch(ex) {
+		log.error("not equal:", a, b);
+		return false;
+	}
+}
 
 var testCounter = 0;
 function testBuffer (length) {
@@ -17,9 +31,10 @@ exports.testRequest = function (test) {
     pb.request(8, parsebuffer.setter(result));
     pb.request(8, parsebuffer.setter(result));
     pb.request(4, parsebuffer.setter(result, function () {
-        test.deepEqual(result, [new Buffer([0,1,2,3,4,5,6,7]),
-            new Buffer([8,9,10,11,12,13,14,15]),
-            new Buffer([16,17,18,19])]);
+        test.ok(myDeepEqual(result, 
+				[new Buffer([0,1,2,3,4,5,6,7]),
+					new Buffer([8,9,10,11,12,13,14,15]),
+					new Buffer([16,17,18,19])]));
     }));
 
     pb.onData(testBuffer(6));
@@ -31,22 +46,26 @@ exports.testRequest = function (test) {
 };
 
 exports.testGroup = function (test) {
-    test.expect(3);
+    test.expect(4);
 
     var pb = new parsebuffer.ParseBuffer();
     var result = [];
     var theGroup = pb.enterGroup(20, function() {
-        console.log("XXXXXXXXXXX");
-        test.deepEqual(result, [new Buffer([20,21,22,23,24,25,26,27]),
-            new Buffer([28,29,30,31,32,33,34,35]),
-            new Buffer([36,37,38,39])]);
+		log.debug("group callback");
+        test.ok(myDeepEqual(result,
+				[new Buffer([20,21,22,23,24,25,26,27]),
+					new Buffer([28,29,30,31,32,33,34,35]),
+					new Buffer([36,37,38,39])]));
         test.ok(! theGroup.active);
     });
     pb.request(8, parsebuffer.setter(result));
-    pb.request(8, parsebuffer.setter(result));
+    pb.request(8, function (buff) {
+		result.push(buff);
+		test.ok(theGroup.active);
+	});
     pb.request(4, function (buff) {
+		log.debug("last request");
         result.push(buff);
-        console.debug("final callback", buff);
         // in the callback of the last group member, this is false
         // before reading the dataelement value, it would be true
         test.ok(! theGroup.active);

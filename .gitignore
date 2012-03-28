@@ -5,3 +5,4 @@
 *~
 *.x
 x.*
+npm-debug.log
