@@ -1,0 +1,23 @@
+info it worked if it ends with ok
+verbose cli [ 'node', '/usr/local/bin/npm', 'test' ]
+info using npm@1.1.12
+info using node@v0.6.14
+verbose config file /home/gj/.npmrc
+verbose config file /usr/local/etc/npmrc
+verbose config file /usr/local/lib/node_modules/npm/npmrc
+ERR! Error: ENOENT, open '/home/gj/src/node-js/node-dicom/test/package.json'
+ERR! You may report this log at:
+ERR!     <http://github.com/isaacs/npm/issues>
+ERR! or email it to:
+ERR!     <npm-@googlegroups.com>
+ERR! 
+ERR! System Linux 3.0.0-17-generic
+ERR! command "node" "/usr/local/bin/npm" "test"
+ERR! cwd /home/gj/src/node-js/node-dicom/test
+ERR! node -v v0.6.14
+ERR! npm -v 1.1.12
+ERR! path /home/gj/src/node-js/node-dicom/test/package.json
+ERR! code ENOENT
+ERR! message ENOENT, open '/home/gj/src/node-js/node-dicom/test/package.json'
+ERR! errno {}
+verbose exit [ 1, true ]
