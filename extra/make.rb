@@ -3,19 +3,21 @@
 require 'rexml/document'
 
 
+tag_js = File.new("tag.x", "w")
 doc = REXML::Document.new File.new "dictionary.xml"
-print "export.TAG_DICT = {"
+tag_js.write "var TAG_DICT = {\n"
 doc.elements.each('dictionary/element') { 
 	|e| 
 	text = <<EOF
 '#{e.attributes['tag']}': {'vr': '#{e.attributes['vr']}', 'vm': '#{e.attributes['vm']}', 'name': '#{e.attributes['keyword']}'},
 EOF
-	print text
+	tag_js.write text
 }
-print "};"
+tag_js.write "};"
 
+uid_js = File.new("uid.x", "w")
 doc = REXML::Document.new File.new "uids.xml"
-print "export.UID_DICT = {"
+uid_js.write("var UID_DICT = {\n");
 doc.elements.each('uids/uid') { 
 	|e| 
 	typ = e.attributes['type'];
@@ -23,7 +25,7 @@ doc.elements.each('uids/uid') {
 	text = <<EOF
 '#{e.attributes['uid']}': {'type': '#{typ}', 'name': '#{e.attributes['keyword']}'},
 EOF
-	print text
+	uid_js.write(text);
 }
-print "};"
+uid_js.write("};")
 
