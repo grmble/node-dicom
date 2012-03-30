@@ -9,7 +9,7 @@ tag_js.write "var TAG_DICT = {\n"
 doc.elements.each('dictionary/element') { 
 	|e| 
 	text = <<EOF
-'#{e.attributes['tag']}': {'vr': '#{e.attributes['vr']}', 'vm': '#{e.attributes['vm']}', 'name': '#{e.attributes['keyword']}'},
+    '#{e.attributes['tag']}': {'vr': '#{e.attributes['vr']}', 'vm': '#{e.attributes['vm']}', 'name': '#{e.attributes['keyword']}'},
 EOF
 	tag_js.write text
 }
@@ -23,7 +23,7 @@ doc.elements.each('uids/uid') {
 	typ = e.attributes['type'];
 	typ.gsub!(/ /, '')
 	text = <<EOF
-'#{e.attributes['uid']}': {'type': '#{typ}', 'name': '#{e.attributes['keyword']}'},
+    '#{e.attributes['uid']}': {'type': '#{typ}', 'name': '#{e.attributes['keyword']}'},
 EOF
 	uid_js.write(text);
 }
