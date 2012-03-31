@@ -79,6 +79,38 @@ exports.testGroup = function (test) {
     test.done();
 };
 
+exports.testExplicitGroup = function (test) {
+    test.expect(4);
+
+    var pb = new parsebuffer.ParseBuffer(),
+		result = [],
+		theGroup = pb.enterGroup(function () {
+			log.debug("explicit group callback", result);
+			test.ok(myDeepEqual(result,
+					[new Buffer([40, 41, 42, 43, 44, 45, 46, 47]),
+					new Buffer([48, 49, 50, 51, 52, 53, 54, 55]),]));
+			test.ok(!theGroup.active);
+		});
+
+    pb.request(8, parsebuffer.setter(result));
+    pb.request(8, function (buff) {
+		result.push(buff);
+		test.ok(theGroup.active);
+                pb.exitGroup();
+	});
+    pb.request(4, function (buff) {
+        log.debug("last request");
+        result.push(buff);
+        // in the callback of the last group member, this is false
+        // before reading the dataelement value, it would be true
+        test.ok(!theGroup.active);
+    });
+
+    pb.onData(testBuffer(20));
+
+    test.done();
+};
+
 exports.testEOF = function (test) {
     test.expect(2);
 

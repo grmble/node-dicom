@@ -1,0 +1,11 @@
+{
+    "appenders": [
+        {
+            "type": "console"
+        }
+    ],
+    "levels": {
+        "parsebuffer": "DEBUG",
+        "dicom-decoder": "DEBUG"
+    }
+}

@@ -6,6 +6,6 @@
         }
     ],
     "level": {
-        "xxx": "DEBUG"
+        "xxx": "INFO"
     }
 }
