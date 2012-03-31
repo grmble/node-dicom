@@ -8,8 +8,10 @@ doc = REXML::Document.new File.new "dictionary.xml"
 tag_js.write "var TAG_DICT = {\n"
 doc.elements.each('dictionary/element') { 
 	|e| 
+        tag = e.attributes['tag']
+        tag = tag.gsub(/(\w{4})(\w{4})$/, "(\\1,\\2)")
 	text = <<EOF
-    '#{e.attributes['tag']}': {'vr': '#{e.attributes['vr']}', 'vm': '#{e.attributes['vm']}', 'name': '#{e.attributes['keyword']}'},
+    '#{tag}': {'tag': #{tag}, 'vr': '#{e.attributes['vr']}', 'vm': '#{e.attributes['vm']}', 'name': '#{e.attributes['keyword']}'},
 EOF
 	tag_js.write text
 }
@@ -23,9 +25,10 @@ doc.elements.each('uids/uid') {
 	typ = e.attributes['type'];
 	typ.gsub!(/ /, '')
 	text = <<EOF
-    '#{e.attributes['uid']}': {'type': '#{typ}', 'name': '#{e.attributes['keyword']}'},
+    '#{e.attributes['uid']}': makeUID('#{e.attributes['uid']}', '#{e.attributes['keyword']}', '#{typ}'),
 EOF
 	uid_js.write(text);
 }
-uid_js.write("};")
+uid_js.write("};\n")
+uid_js.write("postProcess(UID_DICT);\n")
 

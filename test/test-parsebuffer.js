@@ -34,9 +34,9 @@ exports.testRequest = function (test) {
     pb.request(8, parsebuffer.setter(result));
     pb.request(4, parsebuffer.setter(result, function () {
         test.ok(myDeepEqual(result,
-				[new Buffer([0, 1, 2, 3, 4, 5, 6, 7]),
-					new Buffer([8, 9, 10, 11, 12, 13, 14, 15]),
-					new Buffer([16, 17, 18, 19])]));
+                [new Buffer([0, 1, 2, 3, 4, 5, 6, 7]),
+                new Buffer([8, 9, 10, 11, 12, 13, 14, 15]),
+                new Buffer([16, 17, 18, 19])]));
     }));
 
     pb.onData(testBuffer(6));
@@ -75,6 +75,28 @@ exports.testGroup = function (test) {
     });
 
     pb.onData(testBuffer(20));
+
+    test.done();
+};
+
+exports.testEOF = function (test) {
+    test.expect(2);
+
+    var pb = new parsebuffer.ParseBuffer();
+    test.ok(!pb.eof);
+    pb.onEnd();
+    test.ok(pb.eof);
+
+    test.done();
+};
+
+exports.testError = function (test) {
+    test.expect(2);
+
+    var pb = new parsebuffer.ParseBuffer();
+    test.ok(!pb.error);
+    pb.onError(new Error("some text"));
+    test.ok(pb.error);
 
     test.done();
 };

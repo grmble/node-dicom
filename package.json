@@ -15,7 +15,8 @@
         "node": "0.6.x"
     },
     "dependencies": {
-        "log4js": "0.4.x"
+        "log4js": "0.4.x",
+        "printf": "0.0.x"
     },
     "devDependencies": {
         "nodeunit": "0.6.x"

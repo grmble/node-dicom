@@ -20,12 +20,12 @@ exports.testUL = function (test) {
 exports.testValueLengthBytes = function (test) {
     test.expect(4);
     var ul = new VR.LE.UL(),
-		ob = new VR.LE.OB();
-    test.equal(ul.valueLengthBytes(false), 2);
-    test.equal(ul.valueLengthBytes(true), 4);
+        ob = new VR.LE.OB();
+    test.equal(ul.explicitValueLengthBytes, 2);
+    test.equal(ul.implicitValueLengthBytes, 4);
 
-    test.equal(ob.valueLengthBytes(false), 6);
-    test.equal(ob.valueLengthBytes(true), 4);
+    test.equal(ob.explicitValueLengthBytes, 6);
+    test.equal(ob.implicitValueLengthBytes, 4);
 
     test.done();
 };
