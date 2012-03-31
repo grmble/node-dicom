@@ -11,11 +11,12 @@ doc.elements.each('dictionary/element') {
         tag = e.attributes['tag']
         tag = tag.gsub(/(\w{4})(\w{4})$/, "(\\1,\\2)")
 	text = <<EOF
-    '#{tag}': {'tag': #{tag}, 'vr': '#{e.attributes['vr']}', 'vm': '#{e.attributes['vm']}', 'name': '#{e.attributes['keyword']}'},
+    '#{tag}': {'tag': '#{tag}', 'vr': '#{e.attributes['vr']}', 'vm': '#{e.attributes['vm']}', 'name': '#{e.attributes['keyword']}'},
 EOF
 	tag_js.write text
 }
-tag_js.write "};"
+tag_js.write "};\n"
+tag_js.write "postProcess(TAG_DICT);\n"
 
 uid_js = File.new("uid.x", "w")
 doc = REXML::Document.new File.new "uids.xml"
