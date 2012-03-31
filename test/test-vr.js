@@ -1,6 +1,7 @@
 "use strict";
 
-var VR = require('../lib/vr');
+var VR = require('../lib/vr'),
+    uids = require('../lib/uids');
 
 exports.testUL = function (test) {
     test.expect(4);
@@ -104,6 +105,19 @@ exports.testST = function (test) {
     var stBuff = new Buffer("Spamless^Juergen\\Grmble"),
         st = new VR.LE.ST({rawValue: stBuff});
     test.deepEqual(st.decode(),  ["Spamless^Juergen\\Grmble"]);
+
+    test.done();
+};
+
+exports.testNoValue = function (test) {
+    test.expect(3);
+
+    var leItem = new VR.LE.NoValue({tag: "(FFFE,E000)"}),
+        beItem = new VR.LE.NoValue({tag: "(FFFE,E000)"});
+
+    test.equal(4, uids.ts.ExplicitVRLittleEndian.valueLengthBytes(leItem));
+    test.equal(4, uids.ts.ImplicitVRLittleEndian.valueLengthBytes(leItem));
+    test.equal(4, uids.ts.ExplicitVRBigEndian.valueLengthBytes(beItem));
 
     test.done();
 };

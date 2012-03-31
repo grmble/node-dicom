@@ -11,5 +11,5 @@ var uids = require('../lib/uids'),
     .argv;
 
 argv._.forEach(function (what) {
-    uids.find(argv.f ? what : new RegExp(what));
+    uids.find(argv.f ? what : new RegExp(what, "i"));
 });

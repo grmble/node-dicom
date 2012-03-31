@@ -1,11 +1,11 @@
 {
     "appenders": [
         {
-            "type": "console",
-            "category": "xxx"
+            "type": "console"
         }
     ],
-    "level": {
-        "xxx": "INFO"
+    "levels": {
+        "parsebuffer": "INFO",
+        "dicom-decoder": "INFO"
     }
 }

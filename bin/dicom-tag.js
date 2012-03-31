@@ -11,5 +11,5 @@ var tags = require('../lib/tags'),
     .argv;
 
 argv._.forEach(function (what) {
-    tags.find(argv.f ? what : new RegExp(what));
+    tags.find(argv.f ? what : new RegExp(what, "i"));
 });
