@@ -48,18 +48,21 @@ exports.testRequest = function (test) {
 };
 
 exports.testGroup = function (test) {
-    test.expect(4);
+    test.expect(5);
 
     var pb = new parsebuffer.ParseBuffer(),
-		result = [],
-		theGroup = pb.enterGroup(20, function () {
-			log.debug("group callback");
-			test.ok(myDeepEqual(result,
-					[new Buffer([20, 21, 22, 23, 24, 25, 26, 27]),
-					new Buffer([28, 29, 30, 31, 32, 33, 34, 35]),
-					new Buffer([36, 37, 38, 39])]));
-			test.ok(!theGroup.active);
-		});
+        result = [],
+        theGroup = pb.enterGroup(20, function () {
+            log.debug("group enter callback");
+            test.ok(result.length === 0);
+        }, function () {
+            log.debug("group callback");
+            test.ok(myDeepEqual(result,
+                    [new Buffer([20, 21, 22, 23, 24, 25, 26, 27]),
+                    new Buffer([28, 29, 30, 31, 32, 33, 34, 35]),
+                    new Buffer([36, 37, 38, 39])]));
+            test.ok(!theGroup.active);
+        });
 
     pb.request(8, parsebuffer.setter(result));
     pb.request(8, function (buff) {
@@ -80,24 +83,27 @@ exports.testGroup = function (test) {
 };
 
 exports.testExplicitGroup = function (test) {
-    test.expect(4);
+    test.expect(5);
 
     var pb = new parsebuffer.ParseBuffer(),
-		result = [],
-		theGroup = pb.enterGroup(function () {
-			log.debug("explicit group callback", result);
-			test.ok(myDeepEqual(result,
-					[new Buffer([40, 41, 42, 43, 44, 45, 46, 47]),
-					new Buffer([48, 49, 50, 51, 52, 53, 54, 55]),]));
-			test.ok(!theGroup.active);
-		});
+        result = [],
+        theGroup = pb.enterGroup(function (group2) {
+            log.debug("explicit group callback", result);
+            test.ok(myDeepEqual(result,
+                    [new Buffer([40, 41, 42, 43, 44, 45, 46, 47]),
+                    new Buffer([48, 49, 50, 51, 52, 53, 54, 55])]));
+            test.ok(!theGroup.active);
+
+            // test that we get the group argument in the end callback
+            test.equal(group2, theGroup);
+        });
 
     pb.request(8, parsebuffer.setter(result));
     pb.request(8, function (buff) {
-		result.push(buff);
-		test.ok(theGroup.active);
-                pb.exitGroup();
-	});
+        result.push(buff);
+        test.ok(theGroup.active);
+        pb.exitGroup();
+    });
     pb.request(4, function (buff) {
         log.debug("last request");
         result.push(buff);
@@ -127,8 +133,38 @@ exports.testError = function (test) {
 
     var pb = new parsebuffer.ParseBuffer();
     test.ok(!pb.error);
-    pb.onError(new Error("some text"));
+    pb.request(2, function (buff) {
+        // this should never be called
+        test.ok(false);
+    });
+    pb.onError(new Error("testing error handling"));
     test.ok(pb.error);
+
+    // this should not do anything because the parsebuffer is in error
+    pb.onData(new Buffer([1, 2]));
+
 
     test.done();
 };
+
+exports.testRequestStream = function (test) {
+    test.expect(1);
+
+    var pb = new parsebuffer.ParseBuffer(),
+        count = 0,
+        gotFinished;
+    pb.requestStream(20, function (buffer, finished) {
+        count += 1;
+        if (finished) {
+            test.equal(count, 4);
+        }
+    });
+
+    pb.onData(testBuffer(6));
+    pb.onData(testBuffer(6));
+    pb.onData(testBuffer(4));
+    pb.onData(testBuffer(4));
+
+    test.done();
+};
+
