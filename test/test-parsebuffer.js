@@ -1,18 +1,18 @@
 "use strict";
 
 var parsebuffer = require('../lib/parsebuffer'),
-	assert = require('assert'),
-	log4js = require('log4js'),
-	log = log4js.getLogger('test-parsebuffer');
+    assert = require('assert'),
+    log4js = require('log4js'),
+    log = log4js.getLogger('test-parsebuffer');
 
 function myDeepEqual(a, b) {
-	try {
-		assert.deepEqual(a, b);
-		return true;
-	} catch (ex) {
-		log.error("not equal:", a, b);
-		return false;
-	}
+    try {
+        assert.deepEqual(a, b);
+        return true;
+    } catch (ex) {
+        log.error("not equal:", a, b);
+        return false;
+    }
 }
 
 var testCounter = 0;
@@ -20,7 +20,7 @@ function testBuffer(length) {
     var buff = new Buffer(length), i;
     for (i = 0; i < length; i += 1) {
         buff[i] = testCounter;
-		testCounter += 1;
+        testCounter += 1;
     }
     return buff;
 }
@@ -29,7 +29,7 @@ exports.testRequest = function (test) {
     test.expect(1);
 
     var pb = new parsebuffer.ParseBuffer(),
-		result = [];
+        result = [];
     pb.request(8, parsebuffer.setter(result));
     pb.request(8, parsebuffer.setter(result));
     pb.request(4, parsebuffer.setter(result, function () {
@@ -66,11 +66,11 @@ exports.testGroup = function (test) {
 
     pb.request(8, parsebuffer.setter(result));
     pb.request(8, function (buff) {
-		result.push(buff);
-		test.ok(theGroup.active);
-	});
+        result.push(buff);
+        test.ok(theGroup.active);
+    });
     pb.request(4, function (buff) {
-		log.debug("last request");
+        log.debug("last request");
         result.push(buff);
         // in the callback of the last group member, this is false
         // before reading the dataelement value, it would be true
@@ -151,20 +151,17 @@ exports.testRequestStream = function (test) {
     test.expect(1);
 
     var pb = new parsebuffer.ParseBuffer(),
-        count = 0,
-        gotFinished;
-    pb.requestStream(20, function (buffer, finished) {
-        count += 1;
-        if (finished) {
-            test.equal(count, 4);
-        }
-    });
+        count = 0;
+    pb.requestStream(20, function (buffer) { count += 1; },
+            function () {
+                test.equal(count, 4);
+                test.done();
+            });
 
     pb.onData(testBuffer(6));
     pb.onData(testBuffer(6));
     pb.onData(testBuffer(4));
     pb.onData(testBuffer(4));
 
-    test.done();
 };
 
