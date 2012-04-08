@@ -155,3 +155,20 @@ exports.elementLength = function (test) {
 
 };
 
+
+exports.testPartialRaw = function (test) {
+    test.expect(2);
+    var pn = new VR.LE.PN();
+    pn.pushRaw(new Buffer("xxx"));
+    pn.pushRaw(new Buffer("^"));
+    pn.pushRaw(new Buffer("yyy"));
+    pn.combineRaws();
+    test.equal(pn.value(), 'xxx^yyy');
+
+    pn._rawValues = [];
+    pn.combineRaws();
+    test.equal(pn.value(), undefined);
+
+    test.done();
+};
+
