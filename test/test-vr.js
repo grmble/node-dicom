@@ -1,5 +1,7 @@
 "use strict";
 
+/*jslint nomen: true */
+
 var VR = require('../lib/vr'),
     uids = require('../lib/uids');
 
@@ -7,14 +9,14 @@ exports.testUL = function (test) {
     test.expect(4);
 
     var ul = new VR.LE.UL({rawValue: new Buffer([1, 2, 3, 4])});
-    test.deepEqual(ul.decode(),  [0x04030201]);
-    ul.rawValue = new Buffer([1, 2, 3, 4, 5, 6, 7, 8]);
-    test.deepEqual(ul.decode(), [0x04030201,  0x08070605]);
+    test.deepEqual(ul.values(),  [0x04030201]);
+    ul.setRawValue(new Buffer([1, 2, 3, 4, 5, 6, 7, 8]));
+    test.deepEqual(ul.values(), [0x04030201,  0x08070605]);
 
     ul = new VR.BE.UL({rawValue: new Buffer([1, 2, 3, 4])});
-    test.deepEqual(ul.decode(),  [0x01020304]);
-    ul.rawValue = new Buffer([1, 2, 3, 4, 5, 6, 7, 8]);
-    test.deepEqual(ul.decode(),  [0x01020304,  0x05060708]);
+    test.deepEqual(ul.values(),  [0x01020304]);
+    ul.setRawValue(new Buffer([1, 2, 3, 4, 5, 6, 7, 8]));
+    test.deepEqual(ul.values(),  [0x01020304,  0x05060708]);
 
 
     test.done();
@@ -43,10 +45,10 @@ exports.testUI = function (test) {
     test.expect(2);
 
     var ui = new VR.LE.UI({rawValue: new Buffer("1.2.3.4")});
-    test.deepEqual(ui.decode(),  ["1.2.3.4"]);
+    test.deepEqual(ui.values(),  ["1.2.3.4"]);
 
-    ui.rawValue = new Buffer("1.3.12.2.1107.5.1.4.43511.30000005090506061531200001556\u0000");
-    test.deepEqual(ui.decode(), ["1.3.12.2.1107.5.1.4.43511.30000005090506061531200001556"]);
+    ui.setRawValue(new Buffer("1.3.12.2.1107.5.1.4.43511.30000005090506061531200001556\u0000"));
+    test.deepEqual(ui.values(), ["1.3.12.2.1107.5.1.4.43511.30000005090506061531200001556"]);
     test.done();
 };
 
@@ -56,7 +58,7 @@ exports.testOB = function (test) {
     var input = new Buffer([1, 2, 3, 4, 5, 6, 7, 8]),
         ob = new VR.LE.OB({rawValue: input}),
         output;
-    output = ob.decode();
+    output = ob.values();
 
     test.equal(1, output.length);
     test.equal(input.toString('binary'), output.toString('binary'));
@@ -79,8 +81,8 @@ exports.testOF = function (test) {
     leOF = new VR.LE.OF({rawValue: lePi});
     beOF = new VR.BE.OF({rawValue: bePi});
 
-    beResult = beOF.decode();
-    leResult = leOF.decode();
+    beResult = beOF.values();
+    leResult = leOF.values();
 
     test.equal(1,  beResult.length);
     test.equal(1,  leResult.length);
@@ -94,7 +96,7 @@ exports.testPN = function (test) {
 
     var pnBuff = new Buffer("Spamless^Juergen\\Grmble"),
         pn = new VR.LE.PN({rawValue: pnBuff});
-    test.deepEqual(pn.decode(),  ["Spamless^Juergen",  "Grmble"]);
+    test.deepEqual(pn.values(),  ["Spamless^Juergen",  "Grmble"]);
 
     test.done();
 };
@@ -104,16 +106,16 @@ exports.testST = function (test) {
 
     var stBuff = new Buffer("Spamless^Juergen\\Grmble"),
         st = new VR.LE.ST({rawValue: stBuff});
-    test.deepEqual(st.decode(),  ["Spamless^Juergen\\Grmble"]);
+    test.deepEqual(st.values(),  ["Spamless^Juergen\\Grmble"]);
 
     test.done();
 };
 
-exports.testNoValue = function (test) {
+exports.testNoVR = function (test) {
     test.expect(3);
 
-    var leItem = new VR.LE.NoValue({tag: "(FFFE,E000)"}),
-        beItem = new VR.LE.NoValue({tag: "(FFFE,E000)"});
+    var leItem = new VR.LE.NoVR({tag: "(FFFE,E000)"}),
+        beItem = new VR.LE.NoVR({tag: "(FFFE,E000)"});
 
     test.equal(4, uids.ts.ExplicitVRLittleEndian.valueLengthBytes(leItem));
     test.equal(4, uids.ts.ImplicitVRLittleEndian.valueLengthBytes(leItem));
@@ -121,3 +123,35 @@ exports.testNoValue = function (test) {
 
     test.done();
 };
+
+
+exports.elementLength = function (test) {
+    test.expect(12);
+
+    var sq, pn, item;
+
+    sq = new VR.LE.SQ({tag: '(0010,1002)'}); // other patient ids sequence
+    sq.setElementLength(sq._unlimitedLength);
+    test.ok(sq.nesting);
+    test.ok(sq.unlimited);
+    test.equal(sq.nestedLength, undefined);
+    test.equal(sq.valueLength, undefined);
+
+    pn = new VR.LE.PN({tag: '(0010,0010)'}); // patient name
+    pn.setElementLength(15);
+    test.ok(!pn.nesting);
+    test.ok(!pn.unlimited);
+    test.equal(pn.nestedLength, undefined);
+    test.equal(pn.valueLength, 15);
+
+    item = new VR.LE.NoVR({tag: '(FFFE,E000)'}); // Item
+    item.setElementLength(15);
+    test.ok(item.nesting);
+    test.ok(!item.unlimited);
+    test.equal(item.nestedLength, 15);
+    test.equal(item.valueLength, undefined);
+
+    test.done();
+
+};
+
