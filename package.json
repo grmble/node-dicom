@@ -7,7 +7,6 @@
         "type": "git",
         "url": "/home/gj/Dropbox/git/node-js/node-dicom.git/"
     },
-    "main": "lib/dicom-decoder.js",
     "scripts": {
         "test": "nodeunit test"
     },
