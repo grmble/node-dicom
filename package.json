@@ -5,7 +5,7 @@
     "version": "0.0.0",
     "repository": {
         "type": "git",
-        "url": "/home/gj/Dropbox/git/node-js/node-dicom.git/"
+        "url": "git@github.com:grmble/node-dicom.git"
     },
     "scripts": {
         "test": "nodeunit test"
