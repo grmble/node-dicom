@@ -1,6 +1,6 @@
 {
     "author": "Juergen Gmeiner",
-    "name": "node-dicom",
+    "name": "dicom",
     "description": "DICOM for node-js",
     "version": "0.1.0",
     "repository": {
