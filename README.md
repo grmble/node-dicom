@@ -12,7 +12,7 @@ Examples:
 Read a dicom file in ExplictVRLittleEndian - no preamble or metainfo, just the dataset.
 
     var fs = require('fs'),
-        dicom = require('../node-dicom');
+        dicom = require('node-dicom');
 
     var stream = fs.createReadStream(process.argv[2]),
         reader = new dicom.dicomreader.DicomReader(stream),
@@ -26,7 +26,7 @@ Read a DICOM file with preamble & metainfo giving the TS for the main dataset:
 
 
     var fs = require('fs'),
-        dicom = require('../node-dicom');
+        dicom = require('node-dicom');
 
 
     var stream = fs.createReadStream(process.argv[2]),
