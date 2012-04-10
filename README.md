@@ -16,7 +16,7 @@ Read a dicom file in ExplictVRLittleEndian - no preamble or metainfo, just the d
 
     var stream = fs.createReadStream(process.argv[2]),
         reader = new dicom.dicomreader.DicomReader(stream),
-        handler = new dicom.handler.JsonHandler(reader);
+        handler = new dicom.json.JsonHandler(reader);
     reader.readDataset(function () {
         console.log("Dataset: %s", handler.json());
     });
@@ -31,7 +31,7 @@ Read a DICOM file with preamble & metainfo giving the TS for the main dataset:
 
     var stream = fs.createReadStream(process.argv[2]),
         reader = new dicom.dicomreader.DicomReader(stream),
-        handler = new dicom.handler.JsonHandler(reader);
+        handler = new dicom.json.JsonHandler(reader);
     reader.readFile(function () {
         console.log("Dataset: %s", handler.json());
     });

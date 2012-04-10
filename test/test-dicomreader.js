@@ -19,7 +19,7 @@
 var fs = require('fs'),
     path = require('path'),
     DicomReader = require('../lib/dicomreader').DicomReader,
-    JsonHandler = require('../lib/handler').JsonHandler;
+    JsonHandler = require('../lib/json').JsonHandler;
 
 
 exports.testReadDataset = function (test) {
