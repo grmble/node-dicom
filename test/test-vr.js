@@ -22,6 +22,16 @@ exports.testUL = function (test) {
     test.done();
 };
 
+exports.testEncodeUL = function (test) {
+    test.expect(1);
+
+    var ul = new VR.LE.UL(),
+        buff = ul.encodeValues([0x04030201]);
+
+    test.deepEqual(ul.getValues(buff), [0x04030201]);
+
+    test.done();
+};
 
 exports.testValueLengthBytes = function (test) {
     test.expect(6);
@@ -52,6 +62,37 @@ exports.testUI = function (test) {
     test.done();
 };
 
+exports.testEncodeUI = function (test) {
+    test.expect(1);
+
+    var ui = new VR.LE.UI(),
+        result = ui.encodeValues(["1.2"]);
+
+    test.equal(result.toString(), "1.2\u0000");
+    test.done();
+};
+
+exports.testEncodeLO = function (test) {
+    test.expect(1);
+
+    var lo = new VR.LE.LO(),
+        result = lo.encodeValues(["1.2"]);
+
+    test.equal(result.toString(), "1.2 ");
+    test.done();
+};
+
+exports.testEncodeST = function (test) {
+    test.expect(2);
+
+    var st = new VR.LE.ST(),
+        result = st.encodeValues(["1.2"]);
+
+    test.equal(result.toString(), "1.2 ");
+    test.throws(function() { st.encodeValues(["1", "2"])});
+    test.done();
+};
+
 exports.testOB = function (test) {
     test.expect(2);
 
@@ -75,14 +116,17 @@ exports.testOF = function (test) {
         beResult,
         leResult;
 
-    bePi.writeFloatBE(3.14,  0);
-    lePi.writeFloatLE(3.14,  0);
+    bePi.writeFloatBE(3.14, 0);
+    lePi.writeFloatLE(3.14, 0);
 
     leOF = new VR.LE.OF({rawValue: lePi});
     beOF = new VR.BE.OF({rawValue: bePi});
 
     beResult = beOF.values();
     leResult = leOF.values();
+
+    console.log("beResult:", beResult);
+    console.log("leResult:", leResult);
 
     test.equal(1,  beResult.length);
     test.equal(1,  leResult.length);
