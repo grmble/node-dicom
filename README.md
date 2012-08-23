@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/grmble/node-dicom.png)](http://travis-ci.org/grmble/node-dicom)
 Node.js DICOM Parser
 ====================
 
