@@ -2,7 +2,7 @@
     "author": "Juergen Gmeiner",
     "name": "dicom",
     "description": "DICOM for node-js",
-    "version": "0.1.1"
+    "version": "0.1.1",
     "repository": {
         "type": "git",
         "url": "git@github.com:grmble/node-dicom.git"
