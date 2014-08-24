@@ -2,7 +2,7 @@
     "author": "Juergen Gmeiner",
     "name": "dicom",
     "description": "DICOM for node-js",
-    "version": "0.1.0",
+    "version": "0.2.0-SNAPSHOT",
     "repository": {
         "type": "git",
         "url": "git@github.com:grmble/node-dicom.git"
@@ -11,15 +11,15 @@
         "test": "nodeunit test"
     },
     "engines": {
-        "node": "0.6.x"
+        "node": "0.11.x"
     },
     "dependencies": {
-        "log4js": "0.4.x",
-        "printf": "0.0.x",
-        "optimist": "0.3.x"
+        "log4js": "0.6.x",
+        "printf": "0.1.x",
+        "optimist": "0.6.x"
     },
     "devDependencies": {
-        "nodeunit": "0.6.x"
+        "nodeunit": "0.8.x"
     },
     "directories": {
         "lib": "./lib"
