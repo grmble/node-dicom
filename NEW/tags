@@ -1,0 +1,121 @@
+!_TAG_FILE_FORMAT	2	/extended format/
+!_TAG_FILE_SORTED	0	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Łukasz Korecki	/lukasz@coffeesounds.com/
+!_TAG_PROGRAM_NAME	CoffeeTags	//
+!_TAG_PROGRAM_URL	https://github.com/lukaszkorecki/CoffeeTags	/GitHub repository/
+!_TAG_PROGRAM_VERSION	0.5.0	//
+AE	src/lib/vrs.coffee	/^class AE extends Stringish$/;"	c	line:440	language:coffee
+AS	src/lib/vrs.coffee	/^class AS extends Stringish$/;"	c	line:450	language:coffee
+AT	src/lib/vrs.coffee	/^class AT extends FixedLength$/;"	c	line:266	language:coffee
+ATTest	src/test/test_vrs.coffee	/^exports.ATTest =$/;"	v	line:32	language:coffee
+BigEndian	src/lib/vrs.coffee	/^class BigEndian$/;"	c	line:89	language:coffee
+BigEndianTest	src/test/test_vrs.coffee	/^exports.BigEndianTest =$/;"	v	line:19	language:coffee
+CS	src/lib/vrs.coffee	/^class CS extends Stringish$/;"	c	line:459	language:coffee
+CSObj	src/lib/vrs.coffee	/^class CSObj # an entry in the context stack$/;"	c	line:193	language:coffee
+Context	src/lib/vrs.coffee	/^class Context$/;"	c	line:173	language:coffee
+ContextStack	src/lib/vrs.coffee	/^class ContextStack$/;"	c	line:196	language:coffee
+DA	src/lib/vrs.coffee	/^class DA extends Stringish$/;"	c	line:470	language:coffee
+DS	src/lib/vrs.coffee	/^class DS extends Stringish$/;"	c	line:481	language:coffee
+DT	src/lib/vrs.coffee	/^class DT extends Stringish$/;"	c	line:490	language:coffee
+DicomError	src/lib/vrs.coffee	/^class DicomError extends Error$/;"	c	line:8	language:coffee
+FD	src/lib/vrs.coffee	/^class FD extends FixedLength$/;"	c	line:285	language:coffee
+FDTest	src/test/test_vrs.coffee	/^exports.FDTest =$/;"	v	line:47	language:coffee
+FL	src/lib/vrs.coffee	/^class FL extends FixedLength$/;"	c	line:298	language:coffee
+FLTest	src/test/test_vrs.coffee	/^exports.FLTest =$/;"	v	line:58	language:coffee
+FixedLength	src/lib/vrs.coffee	/^class FixedLength extends VR$/;"	c	line:252	language:coffee
+IS	src/lib/vrs.coffee	/^class IS extends Stringish$/;"	c	line:497	language:coffee
+LO	src/lib/vrs.coffee	/^class LO extends Stringish$/;"	c	line:506	language:coffee
+LT	src/lib/vrs.coffee	/^class LT extends Stringish$/;"	c	line:514	language:coffee
+LittleEndian	src/lib/vrs.coffee	/^class LittleEndian$/;"	c	line:18	language:coffee
+LittleEndianTest	src/test/test_vrs.coffee	/^exports.LittleEndianTest =$/;"	v	line:8	language:coffee
+OB	src/lib/vrs.coffee	/^class OB extends OtherVR$/;"	c	line:373	language:coffee
+OF	src/lib/vrs.coffee	/^class OF extends OtherVR$/;"	c	line:394	language:coffee
+OW	src/lib/vrs.coffee	/^class OW extends OtherVR$/;"	c	line:387	language:coffee
+OtherVR	src/lib/vrs.coffee	/^class OtherVR extends FixedLength$/;"	c	line:357	language:coffee
+PN	src/lib/vrs.coffee	/^class PN extends Stringish$/;"	c	line:525	language:coffee
+SH	src/lib/vrs.coffee	/^class SH extends Stringish$/;"	c	line:534	language:coffee
+SL	src/lib/vrs.coffee	/^class SL extends FixedLength$/;"	c	line:310	language:coffee
+SLTest	src/test/test_vrs.coffee	/^exports.SLTest =$/;"	v	line:68	language:coffee
+SQ	src/lib/vrs.coffee	/^class SQ extends VR$/;"	c	line:402	language:coffee
+SS	src/lib/vrs.coffee	/^class SS extends FixedLength$/;"	c	line:322	language:coffee
+SSTest	src/test/test_vrs.coffee	/^exports.SSTest =$/;"	v	line:80	language:coffee
+ST	src/lib/vrs.coffee	/^class ST extends Stringish$/;"	c	line:542	language:coffee
+StringMultiValuesTest	src/test/test_vrs.coffee	/^exports.StringMultiValuesTest =$/;"	v	line:125	language:coffee
+StringPaddingTest	src/test/test_vrs.coffee	/^exports.StringPaddingTest =$/;"	v	line:139	language:coffee
+Stringish	src/lib/vrs.coffee	/^class Stringish extends VR$/;"	c	line:414	language:coffee
+TM	src/lib/vrs.coffee	/^class TM extends Stringish$/;"	c	line:551	language:coffee
+UI	src/lib/vrs.coffee	/^class UI extends Stringish$/;"	c	line:562	language:coffee
+UL	src/lib/vrs.coffee	/^class UL extends FixedLength$/;"	c	line:335	language:coffee
+ULTest	src/test/test_vrs.coffee	/^exports.ULTest =$/;"	v	line:92	language:coffee
+UN	src/lib/vrs.coffee	/^class UN extends OtherVR$/;"	c	line:380	language:coffee
+US	src/lib/vrs.coffee	/^class US extends FixedLength$/;"	c	line:347	language:coffee
+USTest	src/test/test_vrs.coffee	/^exports.USTest =$/;"	v	line:104	language:coffee
+UT	src/lib/vrs.coffee	/^class UT extends Stringish$/;"	c	line:572	language:coffee
+UnexpectedEofOfFile	src/lib/vrs.coffee	/^class UnexpectedEofOfFile extends DicomError$/;"	c	line:10	language:coffee
+VR	src/lib/vrs.coffee	/^class VR$/;"	c	line:232	language:coffee
+_ends_with	src/lib/vrs.coffee	/^_ends_with = (str, char) ->$/;"	f	line:409	language:coffee	object:window
+_vm	src/lib/vrs.coffee	/^  _vm: (buffer) ->$/;"	f	line:256	language:coffee	object:FixedLength
+constructor	src/lib/vrs.coffee	/^  constructor: () ->$/;"	f	line:19	language:coffee	object:LittleEndian
+constructor	src/lib/vrs.coffee	/^  constructor: () ->$/;"	f	line:197	language:coffee	object:ContextStack
+constructor	src/lib/vrs.coffee	/^  constructor: () ->$/;"	f	line:90	language:coffee	object:BigEndian
+constructor	src/lib/vrs.coffee	/^  constructor: (@context, @end_position, @action) ->$/;"	f	line:194	language:coffee	object:CSObj
+constructor	src/lib/vrs.coffee	/^  constructor: (context, buffer, values) ->$/;"	f	line:239	language:coffee	object:VR
+constructor	src/lib/vrs.coffee	/^  constructor: (ctx, endianess, charset, explicit, encapsulated) ->$/;"	f	line:181	language:coffee	object:Context
+encode	src/lib/vrs.coffee	/^  encode: (values) ->$/;"	f	line:271	language:coffee	object:AT
+encode	src/lib/vrs.coffee	/^  encode: (values) ->$/;"	f	line:289	language:coffee	object:FD
+encode	src/lib/vrs.coffee	/^  encode: (values) ->$/;"	f	line:301	language:coffee	object:FL
+encode	src/lib/vrs.coffee	/^  encode: (values) ->$/;"	f	line:313	language:coffee	object:SL
+encode	src/lib/vrs.coffee	/^  encode: (values) ->$/;"	f	line:326	language:coffee	object:SS
+encode	src/lib/vrs.coffee	/^  encode: (values) ->$/;"	f	line:338	language:coffee	object:UL
+encode	src/lib/vrs.coffee	/^  encode: (values) ->$/;"	f	line:351	language:coffee	object:US
+encode	src/lib/vrs.coffee	/^  encode: (values) ->$/;"	f	line:427	language:coffee	object:Stringish
+for_name	src/lib/vrs.coffee	/^for_name = (name, ctx, buffer, values) ->$/;"	f	line:614	language:coffee	object:window
+handle_autopops	src/lib/vrs.coffee	/^  handle_autopops: (pos) ->$/;"	f	line:214	language:coffee	object:ContextStack
+if	src/lib/vrs.coffee	/^    if @allow_multiple_values$/;"	b	line:423	language:coffee
+if	src/lib/vrs.coffee	/^    if _ends_with s, @padding_character$/;"	b	line:421	language:coffee
+if	src/lib/vrs.coffee	/^    if b.length % 2$/;"	b	line:430	language:coffee
+if	src/lib/vrs.coffee	/^    if csobj.action$/;"	b	line:210	language:coffee
+if	src/lib/vrs.coffee	/^    if top.end_position? and top.endposition <= pos$/;"	b	line:216	language:coffee
+if	src/lib/vrs.coffee	/^    if values? and not buffer?$/;"	b	line:241	language:coffee
+pack_doubles	src/lib/vrs.coffee	/^  pack_doubles: (values) ->$/;"	f	line:151	language:coffee	object:BigEndian
+pack_doubles	src/lib/vrs.coffee	/^  pack_doubles: (values) ->$/;"	f	line:82	language:coffee	object:LittleEndian
+pack_floats	src/lib/vrs.coffee	/^  pack_floats: (values) ->$/;"	f	line:145	language:coffee	object:BigEndian
+pack_floats	src/lib/vrs.coffee	/^  pack_floats: (values) ->$/;"	f	line:76	language:coffee	object:LittleEndian
+pack_int16s	src/lib/vrs.coffee	/^  pack_int16s: (values) ->$/;"	f	line:133	language:coffee	object:BigEndian
+pack_int16s	src/lib/vrs.coffee	/^  pack_int16s: (values) ->$/;"	f	line:64	language:coffee	object:LittleEndian
+pack_int32s	src/lib/vrs.coffee	/^  pack_int32s: (values) ->$/;"	f	line:139	language:coffee	object:BigEndian
+pack_int32s	src/lib/vrs.coffee	/^  pack_int32s: (values) ->$/;"	f	line:70	language:coffee	object:LittleEndian
+pack_uint16s	src/lib/vrs.coffee	/^  pack_uint16s: (values) ->$/;"	f	line:121	language:coffee	object:BigEndian
+pack_uint16s	src/lib/vrs.coffee	/^  pack_uint16s: (values) ->$/;"	f	line:52	language:coffee	object:LittleEndian
+pack_uint32s	src/lib/vrs.coffee	/^  pack_uint32s: (values) ->$/;"	f	line:127	language:coffee	object:BigEndian
+pack_uint32s	src/lib/vrs.coffee	/^  pack_uint32s: (values) ->$/;"	f	line:58	language:coffee	object:LittleEndian
+pop	src/lib/vrs.coffee	/^  pop: () ->$/;"	f	line:208	language:coffee	object:ContextStack
+push	src/lib/vrs.coffee	/^  push: (context, end_position, action) ->$/;"	f	line:204	language:coffee	object:ContextStack
+top	src/lib/vrs.coffee	/^  top: () ->$/;"	f	line:222	language:coffee	object:ContextStack
+unpack_doubles	src/lib/vrs.coffee	/^  unpack_doubles: (buff, num) ->$/;"	f	line:116	language:coffee	object:BigEndian
+unpack_doubles	src/lib/vrs.coffee	/^  unpack_doubles: (buff, num) ->$/;"	f	line:47	language:coffee	object:LittleEndian
+unpack_floats	src/lib/vrs.coffee	/^  unpack_floats: (buff, num) ->$/;"	f	line:112	language:coffee	object:BigEndian
+unpack_floats	src/lib/vrs.coffee	/^  unpack_floats: (buff, num) ->$/;"	f	line:43	language:coffee	object:LittleEndian
+unpack_int16s	src/lib/vrs.coffee	/^  unpack_int16s: (buff, num) ->$/;"	f	line:29	language:coffee	object:LittleEndian
+unpack_int16s	src/lib/vrs.coffee	/^  unpack_int16s: (buff, num) ->$/;"	f	line:98	language:coffee	object:BigEndian
+unpack_int32s	src/lib/vrs.coffee	/^  unpack_int32s: (buff, num) ->$/;"	f	line:108	language:coffee	object:BigEndian
+unpack_int32s	src/lib/vrs.coffee	/^  unpack_int32s: (buff, num) ->$/;"	f	line:39	language:coffee	object:LittleEndian
+unpack_uint16	src/lib/vrs.coffee	/^  unpack_uint16: (buff) ->$/;"	f	line:23	language:coffee	object:LittleEndian
+unpack_uint16	src/lib/vrs.coffee	/^  unpack_uint16: (buff) ->$/;"	f	line:92	language:coffee	object:BigEndian
+unpack_uint16s	src/lib/vrs.coffee	/^  unpack_uint16s: (buff, num) ->$/;"	f	line:25	language:coffee	object:LittleEndian
+unpack_uint16s	src/lib/vrs.coffee	/^  unpack_uint16s: (buff, num) ->$/;"	f	line:94	language:coffee	object:BigEndian
+unpack_uint32	src/lib/vrs.coffee	/^  unpack_uint32: (buff) ->$/;"	f	line:102	language:coffee	object:BigEndian
+unpack_uint32	src/lib/vrs.coffee	/^  unpack_uint32: (buff) ->$/;"	f	line:33	language:coffee	object:LittleEndian
+unpack_uint32s	src/lib/vrs.coffee	/^  unpack_uint32s: (buff, num) ->$/;"	f	line:104	language:coffee	object:BigEndian
+unpack_uint32s	src/lib/vrs.coffee	/^  unpack_uint32s: (buff, num) ->$/;"	f	line:35	language:coffee	object:LittleEndian
+value	src/lib/vrs.coffee	/^  value: () ->$/;"	f	line:246	language:coffee	object:VR
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:267	language:coffee	object:AT
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:287	language:coffee	object:FD
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:299	language:coffee	object:FL
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:311	language:coffee	object:SL
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:324	language:coffee	object:SS
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:336	language:coffee	object:UL
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:349	language:coffee	object:US
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:361	language:coffee	object:OtherVR
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:405	language:coffee	object:SQ
+values	src/lib/vrs.coffee	/^  values: () ->$/;"	f	line:419	language:coffee	object:Stringish

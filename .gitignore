@@ -7,3 +7,4 @@
 x.*
 npm-debug.log
 /*-log4js.json
+*.swp
