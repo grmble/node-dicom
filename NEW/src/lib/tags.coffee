@@ -77,14 +77,12 @@ _mask_count = (str) ->
 # Find matching tags.
 #
 ##
-###
-def find(what, sort_by='tag'):
-    """Find matching tags"""
-    regex = re.compile(re.escape(what), re.IGNORECASE)
-    return sorted([el for el in six.itervalues(_TAG_DICT) if regex.search(el.name) or regex.search(el._mask)],
-        key = operator.attrgetter(sort_by))
-###
+find = (regex) ->
+  for tag_str, el of _TAG_DICT
+    if regex.test(tag_str) or regex.test(el.name)
+      console.log el
 
+exports.find = find
 exports.for_tag = for_tag
 exports.calc_bitmasks = calc_bitmasks
 

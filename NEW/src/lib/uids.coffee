@@ -43,7 +43,18 @@ _make_uid = (uid, name, typ) ->
 for_uid = (uid) ->
   _UID_DICT[uid] or exports[uid]
 
+##
+#
+# find a UID
+#
+##
+find = (regex) ->
+  for uid, uidObj of _UID_DICT
+    if regex.test(uid) or regex.test(uidObj.name)
+      console.log uidObj
+
 exports.for_uid = for_uid
+exports.find = find
 
 # after the next line, everything is generated.  DO NOT MODIFY
 # HERE BE DRAGONS
