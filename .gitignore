@@ -8,3 +8,8 @@ x.*
 npm-debug.log
 /*-log4js.json
 *.swp
+/NEW/extra/*.js
+/NEW/lib/*.js
+/NEW/src/*.js
+/NEW/test/*.js
+tags
