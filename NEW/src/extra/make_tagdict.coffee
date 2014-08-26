@@ -3,7 +3,7 @@
 fs = require("fs")
 printf = require("printf")
 xml2js = require("xml2js")
-tags = require("../lib/tags")
+tags = require("../../lib/tags.js")
 
 parse_file = (fn, cb) ->
   fs.readFile fn, "utf8", (err, content) ->
@@ -14,8 +14,8 @@ parse_file = (fn, cb) ->
         return cb err
       cb x
 
+_exports = []
 _TAG_DICT = []
-_TAGNAME_DICT = []
 _masks = []
 _TAG_MASKS = []
 
@@ -31,13 +31,14 @@ collect_tag_dict = (root, cb) ->
     console.log "# collect tag_dict #{root}"
     for x in data[root].el
       mask = x.$.tag
-      xxx = mask.replace(/[xX]/g, '0')
-      tag = parseInt(xxx, 16)
-      tag_str = printf "%08x", tag
-      _TAG_DICT.push "  '#{tag_str}': new Element(#{tag}, '#{x.$.keyword}', '#{x.$.vr}', '#{x.$.vm}', '#{mask}', #{x.$.retired}),"
-      _TAGNAME_DICT.push "  '#{x.$.keyword}': _TAG_DICT['#{tag_str}'],"
-      if 'x' in mask
-        _masks.push mask
+      name = x.$.keyword
+      if name
+        tag = parseInt(mask.replace(/[xX]/g, '0'), 16)
+        tag_str = printf "%08x", tag
+        _exports.push "exports.#{x.$.keyword} = new Element(#{tag}, '#{x.$.keyword}', '#{x.$.vr}', '#{x.$.vm}', '#{mask}', #{x.$.retired})"
+        _TAG_DICT.push "  '#{tag_str}': exports.#{x.$.keyword},"
+        if 'x' in mask
+          _masks.push mask
     cb()
 
 calc_masks = () ->
@@ -45,11 +46,10 @@ calc_masks = () ->
     _TAG_MASKS.push printf("   [%d, 0x%08x, 0x%08x],", cnt, and_mask, base_tag)
 
 dump_dicts = () ->
+  for x in _exports
+    console.log x
   console.log "_TAG_DICT ="
   for x in _TAG_DICT
-    console.log x
-  console.log "_TAGNAME_DICT ="
-  for x in _TAGNAME_DICT
     console.log x
   console.log "_TAG_MASKS = ["
   for x in _TAG_MASKS

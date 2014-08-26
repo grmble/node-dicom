@@ -10,10 +10,14 @@ catch err
 
 exports.TagsTest =
   "test for_tag": (test) ->
-    test.expect 4
+    test.expect 6
     el1 = tags.for_tag(0x00100010)
     el2 = tags.for_tag('PatientName')
+    el3 = tags.PatientName
+    el4 = tags.for_tag(tags.PatientName)
     test.equal el1, el2
+    test.equal el1, el3
+    test.equal el1, el4
     test.equal 'PatientName', el1.name
     test.equal 0x00100010, el1.tag
     test.equal 'PN', el1.vr
