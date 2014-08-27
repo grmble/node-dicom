@@ -2,12 +2,18 @@
 #
 #
 
-_UNDEFINED_LENGTH = 0xFFFFFFFF
-_STREAM_BLOCK_SIZE = 16 * 1024
+bunyan = require "bunyan"
+log = bunyan.createLogger {name: "dicom.vrs", level:'debug'}
+
+UNDEFINED_LENGTH = 0xFFFFFFFF
 
 class DicomError extends Error
 
 class UnexpectedEofOfFile extends DicomError
+
+exports.UNDEFINED_LENGTH = UNDEFINED_LENGTH
+exports.DicomError = DicomError
+exports.UnexpectedEofOfFile = UnexpectedEofOfFile
 
 ##
 # little/big endian helpers
@@ -220,8 +226,47 @@ class ContextStack
     this
 
   top: () ->
-    @_stack[@_stack.length - 1]
+    @_stack[@_stack.length - 1].context
 
+  log_summary: () ->
+    context = @top()
+    summary =
+      endianess: context.endianess
+      charset: context.charset
+      explicit: context.explicit
+      encapsulaged: context.encapsulated
+      stack_depth: @_stack.length
+
+
+
+##
+# 
+# DicomEvent for emittings
+#
+##
+class DicomEvent
+  constructor: (@element, @vr, @raw, @command) ->
+  log_summary: () ->
+    summary = {}
+    if @element
+      summary.element = @element.log_summary()
+    if @vr
+      summary.vr = @vr.log_summary()
+    if @raw
+      summary.raw = @raw.length
+    if @command
+      summary.command = @command
+    return summary
+
+dicom_raw = (buffer) ->
+  return new DicomEvent(null, null, buffer)
+
+dicom_command = (tag, cmd) ->
+  return new DicomEvent(tag, null, null, cmd)
+
+exports.DicomEvent = DicomEvent
+exports.dicom_raw = dicom_raw
+exports.dicom_command = dicom_command
 
 ##
 # VR base class.
@@ -246,12 +291,48 @@ class VR
   value: () ->
     @values()[0]
 
+  # consume value length from a readbuffer, return value length
+  consume_value_length: (rb) ->
+    vlb = if @context.explicit
+      @explicit_value_length_bytes
+    else
+      @implicit_value_length_bytes
+    switch vlb
+      when 2 then length_element = new US(@context)
+      when 4 then length_element = new UL(@context)
+      when 6
+        # skip 2 bytes
+        rb.consume 2
+        length_element = new UL(@context)
+      else
+        raise new DicomError("invalue value length bytes (not 2,4 or 6): " + vlb)
+    value_length = length_element.consume_value(rb)
+    return value_length
+
+  # consume value length and then the values
+  consume: (rb) ->
+    value_length = @consume_value_length(rb)
+    @buffer = rb.consume(value_length)
+
+  # log summary for bunyan
+  log_summary: () ->
+    summary =
+      if @buffer?.length < 64
+        values: @values()
+      else
+        length: @buffer?.length
+
 # VR of fixed length
 # defaults to 4 bytes length per element.
 # these are usually endian.
 class FixedLength extends VR
   is_endian: true
   single_value_length: 4
+
+  # consume a single value from the readbuffer
+  consume_value: (rb) ->
+    @buffer = rb.consume(@single_value_length)
+    return @value()
 
   _vm: (buffer) ->
     buffer.length / @single_value_length
@@ -361,10 +442,6 @@ class OtherVR extends FixedLength
   values: () ->
     @buffer
 
-# XXX the other classes need to do some fancy output
-# may not be possible to do this here in java/coffeescript
-# but look here in the python implementation
-
 ##
 # 
 # Dicom OB (= Other Byte)
@@ -398,13 +475,58 @@ class OF extends OtherVR
 #
 # Dicom SQ (= SeQuence) VR
 #
+# this does not consume its values - they should be parsed
+# instead we push a new context, maybe with autopop
+# and let the driving loop do its work
+#
 ##
 class SQ extends VR
   explicit_value_length_bytes:6
 
   values: () ->
     undefined
-  # XXX fancy read_and_emit stuff missing
+
+  consume: (rb, decoder) ->
+    value_length = @consume_value_length(rb)
+    log.debug {length: value_length}, "SQ consume - not consuming, we want to parse the content"
+    end_position = undefined
+    if value_length != UNDEFINED_LENGTH
+      end_position = rb.stream_position + value_length
+    end_cb = () ->
+      obj = dicom_command(undefined, 'sequence_end')
+      log.debug {emit: obj.log_summary()}, "SQ end callback - emitting sequence_end"
+      decoder.emit(obj)
+    decoder.context.push(decoder.context.top(), end_position, end_cb)
+
+
+###
+class SQ(VR):
+    """Dicom SQ (= SeQuence) VR"""
+    explicit_value_length_bytes=6
+
+    def read(self, fp, num_bytes):
+        # dbg_print("SQ: read", num_bytes, " - not reading, we want to parse the content")
+        self._value_length = num_bytes
+
+    def read_and_emit(self, tag, start_pos, fp, reader, handler):
+        """SQ does not actually read its content - we want to parse it!"""
+        value_length = self.read_value_length(fp)
+        end_position = None
+        if value_length != _UNDEFINED_LENGTH:
+            end_position = fp.tell() + value_length
+
+        def end_cb():
+            handler.end_element(tag, start_pos, value_length, self)
+
+        reader._context.push(reader._context.top(), end_position, end_cb)
+        handler.start_element(tag, start_pos, value_length, self)
+
+    def value_length(self):
+        return self._value_length
+
+    def values(self):
+        return None
+###
 
 _ends_with = (str, char) ->
   len = str.length
@@ -612,9 +734,10 @@ _VR_DICT = {
 }
 
 for_name = (name, ctx, buffer, values) ->
-  konstructor = _VR_DICT[name]
-  konstruktor ctx, buffer, values
-
+  constr_fn = _VR_DICT[name]
+  if not constr_fn?
+    throw new DicomError("Unknown VR: #{name}")
+  return new constr_fn(ctx, buffer, values)
 
 exports.LITTLE_ENDIAN = LITTLE_ENDIAN
 exports.BIG_ENDIAN = BIG_ENDIAN
@@ -651,3 +774,4 @@ exports.UI = UI
 exports.UT = UT
 
 exports.for_name = for_name
+exports._VR_DICT = _VR_DICT

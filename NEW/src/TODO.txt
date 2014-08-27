@@ -1,0 +1,6 @@
+(A) Content streaming.
+(A) Finish porting read behaviour from vrs.py
+(B) Encapsulated content streaming.
+(B) UN items with undefined length.
+(C) PN component groups
+Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired

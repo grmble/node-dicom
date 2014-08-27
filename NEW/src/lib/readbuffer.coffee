@@ -20,6 +20,25 @@ class ReadBuffer
     # sum of all buffers minus offset
     @length = 0
 
+  # log summary for bunyan
+  log_summary: () ->
+    summary =
+      offset: @offset,
+      stream_position: @stream_position
+      length: @length
+      num_buffers: @buffers.length
+    return summary
+
+  # make a shallow copy - enough so we can restore state
+  # since the buffers are read-only for reading
+  copy: () ->
+    rb = new ReadBuffer()
+    rb.offset = @offset
+    rb.stream_position = @stream_position
+    rb.buffers = (_ for _ in @buffers)
+    rb.length = @length
+    return rb
+
   push: (buffer) ->
     rc = @buffers.push buffer
     @length += buffer.length
@@ -31,6 +50,8 @@ class ReadBuffer
   # will consume exactly bytes
   # only call this if the buffer has bytes
   consume: (bytes) ->
+    if not @has(bytes)
+      throw new NeedMoreInput(bytes)
     end = @offset + bytes
     buff = @buffers[0]
     # easy/fast case: first buffer sufficient
@@ -57,7 +78,7 @@ class ReadBuffer
       @offset = len
 
     @length -= bytes
-    @streamPosition += bytes
+    @stream_position += bytes
     if @offset == buff.length
       @offset = 0
       @buffers.shift()
@@ -74,7 +95,7 @@ class ReadBuffer
     dst = buff.slice(@offset, end)
     @offset += bytes
     @length -= bytes
-    @streamPosition += bytes
+    @stream_position += bytes
     if @offset == buff.length
       @offset = 0
       @buffers.shift()
@@ -117,5 +138,8 @@ class ReadBuffer
     idx = @indexOf '\n'
     return if idx >= 0 then idx + 1 else 0
   
+class NeedMoreInput extends Error
+  constructor: (@needMoreInput) ->
+    super("Need #{@needMoreInput} more input.")
 
 module.exports = ReadBuffer

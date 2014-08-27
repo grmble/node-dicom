@@ -139,9 +139,9 @@ exports.StringMultiValuesTest =
 exports.StringPaddingTest =
   "test space padding": (test) ->
     test.expect 2
-    lo = new vrs.LO(DEF_CTX, null, ["XXX"])
-    test.deepEqual new Buffer("XXX ", "binary"), lo.buffer
-    test.deepEqual ["XXX"], lo.values()
+    lo = new vrs.LO(DEF_CTX, null, ["ASD"])
+    test.deepEqual new Buffer("ASD ", "binary"), lo.buffer
+    test.deepEqual ["ASD"], lo.values()
     test.done()
   "test zerobyte padding": (test) ->
     test.expect 2

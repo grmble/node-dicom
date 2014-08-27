@@ -23,6 +23,12 @@ class Element
     group = @tag >> 16
     (group & 1) and (group > 8)
 
+  log_summary: () ->
+    summary =
+      tag: printf("%08x", @tag)
+      name: @name
+      vr: @vr
+
 ##
 # Get the Dicom Element for the tag
 #
