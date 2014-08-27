@@ -35,6 +35,7 @@ class Decoder extends stream.Transform
     @context = new vrs.ContextStack()
     @context.push(new vrs.Context())
     @buffer = readbuffer()
+    @state = @_decode_dataset
 
   # log summary for bunyan
   log_summary: () ->
@@ -45,18 +46,20 @@ class Decoder extends stream.Transform
   _transform: (chunk, encoding, cb) ->
     @buffer.push chunk
     log.debug {buffer: @buffer.log_summary()}, "_transform"
-    @_action_wrapper(@_decode_dataset)
+    @_action_wrapper(@state)
     log.debug {buffer: @buffer.log_summary()}, "_transform done, calling cb"
     cb()
 
+  _switch_state: (state) ->
+    @state = state
+
   _decode_dataset: () =>
-    while obj = @_decode_dataelement()
-      log.debug {event: obj.log_summary()}, "_decode_dataset: emitting"
-      @emit obj
+    while true
+      @_decode_dataelement()
 
   _decode_dataelement: () =>
     @saved = @buffer.copy()
-    log.debug {buffer: @saved.log_summary()}, "_decode_dataelement: saved buffer state"
+    log.trace {buffer: @saved.log_summary()}, "_decode_dataelement: saved buffer state"
     @context.handle_autopops(@start_pos)
     tag = (new vrs.AT(@context.top())).consume_value(@buffer)
     log.debug({tag: printf("%08x", tag)}, "decoded tag")
@@ -64,13 +67,13 @@ class Decoder extends stream.Transform
     # comparing tags somehow does not work ...
     switch tag_str
       when tags.Item.mask
-        return @_handle_item(tag)
+        @_handle_item(tag)
       when tags.ItemDelimitationItem.mask
-        return @_handle_itemdelimitation(tag)
+        @_handle_itemdelimitation(tag)
       when tags.SequenceDelimitationItem.mask
-        return @_handle_sequencedelimitation(tag)
+        @_handle_sequencedelimitation(tag)
       else
-        return @_handle_element(tag)
+        @_handle_element(tag)
 
   # wrap the action
   # this does the housekeeping like exception handling
@@ -106,9 +109,7 @@ class Decoder extends stream.Transform
       vrstr = @buffer.consume(2).toString('binary')
     log.debug {vr: vrstr}, "_handle_element"
     vr = vrs.for_name(vrstr, @context.top())
-    vr.consume(@buffer, this)
-    log.debug {element: tagdef.log_summary(), vr: vr.log_summary()}, "decoded element"
-    return new vrs.DicomEvent(tagdef, vr)
+    vr.consume_and_emit(tagdef, @buffer, this)
 
   _handle_item: (tag) ->
     # item is always in standard ts
@@ -117,38 +118,58 @@ class Decoder extends stream.Transform
     if @context.top().enscapsulated
       # we are in encapsulated OB ... just stream the content out
       obj = vrs.dicom_command(tags.for_tag(tag), "start_item")
-      # queue streaming and end_item
-      throw new Error("implement handling encaps item")
-      # self._handler.start_item(tag, start_pos, value_length)
-      # vrs._stream_bytes(self._handler, self._fp, value_length)
-      # self._handler.end_item(tag, start_pos, value_length)
-      return obj
+      log.debug {emit: obj.log_summary()}, "_handle_item: emitting start_item"
+      @_stream_bytes(value_length)
+      return undefined # no emit by main loop, thank you
     else
       end_position = undefined
       if value_length != vrs.UNDEFINED_LENGTH
         end_position = @buffer.stream_position + value_length
       end_cb = () =>
         obj = vrs.dicom_command('end_item')
-        log.debug {emit: obj}, "_handle_item end callback: emitting end_item"
+        log.debug {emit: obj.log_summary()}, "_handle_item end callback: emitting end_item"
         @emit obj
       @context.push(@context.top(), end_position, end_cb)
       obj = vrs.dicom_command(tags.for_tag(tag), 'start_item')
-      return obj
+      log.debug {emit: obj.log_summary()}, "_handle_item: emitting start_item"
+      @emit obj
 
   _handle_itemdelimitation: (tag) ->
     # always standard ts
     value_length = @_consume_std_value_length()
-    obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, 'item_delimitation')
+    obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, 'end_item')
     @context.pop()
-    return obj
+    log.debug {emit: obj.log_summary()}, "_handle_itemdelimitation: emitting end_item"
+
   _handle_sequencedelimitation: (tag) ->
     # always standard ts
     value_length = @_consume_std_value_length()
-    obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, 'sequence_delimitation')
+    obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, 'end_sequence')
     @context.pop()
-    return obj
+    log.debug {emit: obj.log_summary()}, "_handle_sequencedelimitation: emitting end_sequence"
+
+  # stream x bytes out
+  # this switches states to itself in case the buffer
+  # runs short (very likely with streaming).
+  # once all bytes have been consumed/emitted,
+  # emitObj will be emitted (if any).
+  # Finally the state will be switched to nextState.
+  # nextState defaults to _decode_dataset
+  _stream_bytes: (bytes, emitObj, nextState) =>
+    @_switch_state(@_stream_bytes)
+    while bytes > 0
+      buff = @buffer.easy_consume(bytes)
+      bytes -= buff.length
+      obj = vrs.dicom_raw(buff)
+      log.debug {emit: obj.log_summary(), remaining: bytes}, "_stream_bytes: emitting raw buffer"
+      @emit obj
+    if emitObj?
+      log.debug {emit: obj.log_summary()}, "_stream_bytes: done, emitting post-stream object"
+    if not nextState?
+      nextState = @_decode_dataset
+    @_switch_state nextState
 
 if require.main is module
-  fs.createReadStream process.argv[2], {highWaterMark: 32}
+  fs.createReadStream process.argv[2] #, {highWaterMark: 32}
   .pipe new Decoder {}
 

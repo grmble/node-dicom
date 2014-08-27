@@ -1,6 +1,14 @@
-(A) Content streaming.
-(A) Finish porting read behaviour from vrs.py
+(A) Datafile parsing
+(A) Flush/check for remaining stack.
 (B) Encapsulated content streaming.
+(B) Switch charsets after 0008,0005 SpecificCharacterSet
 (B) UN items with undefined length.
 (C) PN component groups
+(D) undefined instead of 'undefined' for undefined VR elements
+(E) Test defined length SQ
+(E) Test encapsulated OB
+(E) Test undefined length UN
+(E) min_streaming_element_size parameter for decoder
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
+x (A) Content streaming.
+x (A) Finish porting read behaviour from vrs.py

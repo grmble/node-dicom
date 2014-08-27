@@ -87,6 +87,8 @@ class ReadBuffer
   # will consume at most bytes, as much as we have right now
   # this will avoid copying if streaming out bulk data
   easy_consume: (bytes) ->
+    if @length == 0
+      throw new NeedMoreInput(1)
     end = @offset + bytes
     buff = @buffers[0]
     if end > buff.length

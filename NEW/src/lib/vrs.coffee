@@ -292,7 +292,7 @@ class VR
     @values()[0]
 
   # consume value length from a readbuffer, return value length
-  consume_value_length: (rb) ->
+  consume_value_length: (readbuffer) ->
     vlb = if @context.explicit
       @explicit_value_length_bytes
     else
@@ -302,17 +302,36 @@ class VR
       when 4 then length_element = new UL(@context)
       when 6
         # skip 2 bytes
-        rb.consume 2
+        readbuffer.consume 2
         length_element = new UL(@context)
       else
         raise new DicomError("invalue value length bytes (not 2,4 or 6): " + vlb)
-    value_length = length_element.consume_value(rb)
+    value_length = length_element.consume_value(readbuffer)
     return value_length
 
   # consume value length and then the values
-  consume: (rb) ->
-    value_length = @consume_value_length(rb)
-    @buffer = rb.consume(value_length)
+  consume: (readbuffer) ->
+    value_length = @consume_value_length(readbuffer)
+    @buffer = readbuffer.consume(value_length)
+
+  # consume and emit - allows us to override in subclasses
+  consume_and_emit: (element, readbuffer, decoder) ->
+    value_length = @consume_value_length(readbuffer)
+    if value_length == UNDEFINED_LENGTH
+      throw new DicomError("VR::consume_and_emit is not prepared to handle UNDEFINED_LENGTH")
+    if value_length < (decoder.streaming_value_length_minimum ? 128)
+      @buffer = readbuffer.consume(value_length)
+      obj = new DicomEvent(element, this, null, "element")
+      log.debug {emit: obj.log_summary()}, "VR::_consume_and_emit: emitting element"
+    else
+      @stream_element(element, readbuffer, decoder, value_length)
+  
+  # stream the element out (well, the byte buffers anyway)
+  stream_element: (element, readbuffer, decoder, value_length) ->
+    obj = new DicomEvent(element, this, null, "start_element")
+    log.debug {emit: obj.log_summary}, "stream_element: emitting start_element"
+    obj = new DicomEvent(element, this, null, "end_element")
+    decoder._stream_bytes(value_length, obj)
 
   # log summary for bunyan
   log_summary: () ->
@@ -433,14 +452,23 @@ class US extends FixedLength
     @buffer = @context.endianess.pack_uint16s(values)
 
 # base class for the 'other' VRs ... OB, OW, OF, UN
-
-
 class OtherVR extends FixedLength
   explicit_value_length_bytes: 6
-  # XXX: endianess changes for OW/OF
-
   values: () ->
     @buffer
+  # we don't want to accidentally consume these,
+  # they are always streamed
+  consume: (readbuffer) ->
+    undefined
+
+  # consume and emit - allows us to override in subclasses
+  consume_and_emit: (element, readbuffer, decoder, value_length) ->
+    if not value_length
+      value_length = @consume_value_length(readbuffer)
+    if value_length == UNDEFINED_LENGTH
+      throw new DicomError("OtherVR::consume_and_emit is not prepared to handle UNDEFINED_LENGTH")
+    @stream_element(element, readbuffer, decoder, value_length)
+  
 
 ##
 # 
@@ -455,6 +483,22 @@ class OB extends OtherVR
 #
 ##
 class UN extends OtherVR
+  # UN may be of undefined length if it is really a private sequence tag
+  consume_and_emit: (element, readbuffer, decoder) ->
+    value_length = @consume_value_length(readbuffer)
+    log.debug {length: value_length}, "UN consume and emit"
+    if value_length != UNDEFINED_LENGTH
+      # just stream it out, like all other OtherVRs
+      return super(element, readbuffer, decoder, value_length)
+    end_cb = () ->
+      obj = new DicomEvent(element, this, null, "end_sequence")
+      log.debug {emit: obj.log_summary()}, "UN undefined length end callback - emitting end_sequence"
+      decoder.emit(obj)
+    decoder.context.push(decoder.context.top(), null, end_cb)
+
+    obj = new DicomEvent(element, this, null, "start_sequence")
+    log.debug {emit: obj.log_summary()}, "UN undefined length - emitting start_sequence"
+    decoder.emit obj
 
 ##
 #
@@ -486,47 +530,21 @@ class SQ extends VR
   values: () ->
     undefined
 
-  consume: (rb, decoder) ->
-    value_length = @consume_value_length(rb)
-    log.debug {length: value_length}, "SQ consume - not consuming, we want to parse the content"
+  consume_and_emit: (element, readbuffer, decoder) ->
+    value_length = @consume_value_length(readbuffer)
+    log.debug {length: value_length}, "SQ consume and emit"
     end_position = undefined
     if value_length != UNDEFINED_LENGTH
-      end_position = rb.stream_position + value_length
+      end_position = readbuffer.stream_position + value_length
     end_cb = () ->
-      obj = dicom_command(undefined, 'sequence_end')
-      log.debug {emit: obj.log_summary()}, "SQ end callback - emitting sequence_end"
+      obj = new DicomEvent(element, this, null, "end_sequence")
+      log.debug {emit: obj.log_summary()}, "SQ end callback - emitting end_sequence"
       decoder.emit(obj)
     decoder.context.push(decoder.context.top(), end_position, end_cb)
+    obj = new DicomEvent(element, this, null, "start_sequence")
+    log.debug {emit: obj.log_summary()}, "SQ::consume_and_emit - emitting start_sequence"
+    decoder.emit obj
 
-
-###
-class SQ(VR):
-    """Dicom SQ (= SeQuence) VR"""
-    explicit_value_length_bytes=6
-
-    def read(self, fp, num_bytes):
-        # dbg_print("SQ: read", num_bytes, " - not reading, we want to parse the content")
-        self._value_length = num_bytes
-
-    def read_and_emit(self, tag, start_pos, fp, reader, handler):
-        """SQ does not actually read its content - we want to parse it!"""
-        value_length = self.read_value_length(fp)
-        end_position = None
-        if value_length != _UNDEFINED_LENGTH:
-            end_position = fp.tell() + value_length
-
-        def end_cb():
-            handler.end_element(tag, start_pos, value_length, self)
-
-        reader._context.push(reader._context.top(), end_position, end_cb)
-        handler.start_element(tag, start_pos, value_length, self)
-
-    def value_length(self):
-        return self._value_length
-
-    def values(self):
-        return None
-###
 
 _ends_with = (str, char) ->
   len = str.length
