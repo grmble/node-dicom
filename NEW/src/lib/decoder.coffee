@@ -26,10 +26,17 @@ _NO_VR_TAGS = [ tags.Item.tag, tags.ItemDelimitationItem.tag,
 # Dicom Decoder
 #
 # Transforms IO events into DICOM parse events
+#
+# stream.Readable / stream.Writeable / Stream.Transform options are accepted
+#
+# also:
+# streaming_value_length_minimum: minimum value length, longer values will be
+#   streamed
 ##
 class Decoder extends stream.Transform
   constructor: (options)->
     super(options)
+    @streaming_value_length_minimum = options?.streaming_value_length_minimum ? 128
     @_writableState.objectMode = false
     @_readableState.objectMode = true
     @context = new vrs.ContextStack()
