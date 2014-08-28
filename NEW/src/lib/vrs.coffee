@@ -241,6 +241,9 @@ class ContextStack
   top: () ->
     @_stack[@_stack.length - 1].context
 
+  stack_depth: () ->
+    @_stack.length
+
   log_summary: () ->
     context = @top()
     summary =
@@ -330,9 +333,12 @@ class VR
   # consume and emit - allows us to override in subclasses
   consume_and_emit: (element, readbuffer, decoder) ->
     value_length = @consume_value_length(readbuffer)
+    @_consume_and_emit_known_value_length element, readbuffer, decoder, value_length
+
+  _consume_and_emit_known_value_length: (element, readbuffer, decoder, value_length) ->
     if value_length == UNDEFINED_LENGTH
       throw new DicomError("VR::consume_and_emit is not prepared to handle UNDEFINED_LENGTH")
-    if value_length < (decoder.streaming_value_length_minimum ? 128)
+    if value_length < (decoder.streaming_value_length_minimum ? 256)
       @buffer = readbuffer.consume(value_length)
       obj = new DicomEvent(element, this, null, "element")
       log.debug {emit: obj.log_summary()}, "VR::_consume_and_emit: emitting element"
@@ -469,19 +475,7 @@ class OtherVR extends FixedLength
   explicit_value_length_bytes: 6
   values: () ->
     @buffer
-  # we don't want to accidentally consume these,
-  # they are always streamed
-  consume: (readbuffer) ->
-    undefined
 
-  # consume and emit - allows us to override in subclasses
-  consume_and_emit: (element, readbuffer, decoder, value_length) ->
-    if not value_length?
-      value_length = @consume_value_length(readbuffer)
-    if value_length == UNDEFINED_LENGTH
-      throw new DicomError("OtherVR::consume_and_emit is not prepared to handle UNDEFINED_LENGTH")
-    @stream_element(element, readbuffer, decoder, value_length)
-  
 
 ##
 # 
@@ -489,6 +483,17 @@ class OtherVR extends FixedLength
 #
 ##
 class OB extends OtherVR
+  # consume and emit - handle encapsulated pixeldata
+  consume_and_emit: (element, readbuffer, decoder) ->
+    value_length = @consume_value_length(readbuffer)
+    if value_length != UNDEFINED_LENGTH
+      return @_consume_and_emit_known_value_length(element, readbuffer, decoder, value_length)
+    # push encaps context
+    context = decoder.context
+    context.push(new Context(context.top(), undefined, undefined, undefined, true))
+    obj = new DicomEvent(element, this, undefined, "start_element")
+    log.debug {emit: obj.log_summary()}, "OB::consume_and_emit encapsulated start_element"
+    decoder.emit obj
 
 ##
 #
@@ -502,7 +507,7 @@ class UN extends OtherVR
     log.debug {length: value_length}, "UN consume and emit"
     if value_length != UNDEFINED_LENGTH
       # just stream it out, like all other OtherVRs
-      return super(element, readbuffer, decoder, value_length)
+      return @_consume_and_emit_known_value_length(element, readbuffer, decoder, value_length)
     end_cb = () ->
       _obj = new DicomEvent(element, this, null, "end_sequence")
       log.debug {emit: _obj.log_summary()}, "UN undefined length end callback - emitting end_sequence"

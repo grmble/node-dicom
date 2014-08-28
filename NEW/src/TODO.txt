@@ -1,17 +1,22 @@
-(A) Datafile parsing
-(A) Parsing of encapsulated PixelData
-(A) Flush/check for remaining stack.
-(A) Transfer syntax switch / metadata parsing
-(B) Switch charsets after 0008,0005 SpecificCharacterSet
-(C) PN component groups
-(D) undefined instead of 'undefined' for undefined VR elements
-(E) Test defined length SQ
-(E) Test encapsulated OB
-(E) Test undefined length UN
-(E) Test reading big endian data.
+(A) Tag dictionary "OB or OW" has defined semantics for ImplicitVR +Decoder
+(A) Transfer syntax switch / metadata parsing +Decoder
+(A) strict mode +Decoder
+(B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
+(B) Implement Dataset +Dataset
+(B) Implement Encoder +Encoder
+(C) PN component groups +Decoder
+(D) undefined instead of 'undefined' for undefined VR elements +Decoder
+(E) Test defined length SQ +Testing
+(E) Test encapsulated OB +Testing
+(E) Test reading big endian data. +Testing
+(E) Test undefined length UN +Testing
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
+x (A) ByteStreamer object - resuming with correct byte count
 x (A) Content streaming.
+x (A) Datafile parsing
 x (A) Finish porting read behaviour from vrs.py
+x (A) Flush/check for remaining stack.
+x (A) Parsing of encapsulated PixelData
 x (B) Encapsulated content streaming.
 x (B) UN items with undefined length.
 x (E) min_streaming_element_size parameter for decoder

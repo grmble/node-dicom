@@ -37,7 +37,7 @@ log = bunyan.createLogger {name: "dicom.decoder", level:'debug'}
 class Decoder extends stream.Transform
   constructor: (options)->
     super(options)
-    @streaming_value_length_minimum = options?.streaming_value_length_minimum ? 128
+    @streaming_value_length_minimum = options?.streaming_value_length_minimum
     @_writableState.objectMode = false
     @_readableState.objectMode = true
     @context = new vrs.ContextStack()
@@ -70,6 +70,16 @@ class Decoder extends stream.Transform
     log.debug {buffer: @buffer.log_summary()}, "_transform done, calling cb"
     cb()
 
+  _flush: (cb) ->
+    @_action_wrapper(@state)
+    if @buffer.length == 0 and @context.stack_depth() == 1
+      log.debug "_flush successful, all is well with our decode"
+      cb()
+    else
+      log.debug({buffer: @buffer.length context: @context.stack_depth()},
+        "_flush: can not flush (length should be 0, stack depth 1)")
+      @emit new vrs.UnexpectedEndOfFile()
+
   _switch_state: (state, msg) ->
     if not state
       state = @_decode_dataset
@@ -100,9 +110,9 @@ class Decoder extends stream.Transform
 
   # wrap the action
   # this does the housekeeping like exception handling
-  _action_wrapper: (func, args...) ->
+  _action_wrapper: (func) ->
     try
-      func(args...)
+      func()
     catch err
       if err?.doNotRestore
         log.debug "_action_wrapper: streaming NeedMoreInput - no need to restore"
@@ -168,17 +178,18 @@ class Decoder extends stream.Transform
     # item is always in standard ts
     value_length = @_consume_std_value_length()
     start_pos = @buffer.stream_position - 8
-    if @context.top().enscapsulated
+    element = tags.for_tag(tag)
+    if @context.top().encapsulated
       # we are in encapsulated OB ... just stream the content out
-      obj = vrs.dicom_command(tags.for_tag(tag), "start_item")
+      obj = vrs.dicom_command(element, "start_item")
       log.debug {emit: obj.log_summary()}, "_handle_item: emitting start_item"
-      @_stream_bytes(value_length)
+      _obj = vrs.dicom_command(element, "end_item")
+      @_stream_bytes(value_length, _obj)
       return undefined # no emit by main loop, thank you
     else
       end_position = undefined
       if value_length != vrs.UNDEFINED_LENGTH
         end_position = @buffer.stream_position + value_length
-      element = tags.for_tag(tag)
       end_cb = () =>
         _obj = vrs.dicom_command(element, 'end_item')
         log.debug {emit: _obj.log_summary()}, "_handle_item end callback: emitting end_item"
@@ -198,8 +209,13 @@ class Decoder extends stream.Transform
   _handle_sequencedelimitation: (tag) ->
     # always standard ts
     value_length = @_consume_std_value_length()
-    obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, 'end_sequence')
-    @context.pop()
+    command = 'end_sequence'
+    popped = @context.pop()
+    if popped?.encapsulated and not @context.top().encapsulated
+      # we were inside encapsulated pixeldata - SequenceDelimitationItem
+      # ends the pixeldata element, not some sequence
+      command = 'end_element'
+    obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, command)
     log.debug {emit: obj.log_summary()}, "_handle_sequencedelimitation: emitting end_sequence"
 
   # stream x bytes out
@@ -209,22 +225,29 @@ class Decoder extends stream.Transform
   # emitObj will be emitted (if any).
   # Finally the state will be switched to nextState.
   # nextState defaults to _decode_dataset
-  _stream_bytes: (bytes, emitObj, nextState) =>
-    func = () =>
-      @_stream_bytes bytes, emitObj, nextState
-    @_switch_state func, "_stream_bytes"
-    while bytes > 0
-      buff = @buffer.easy_consume(bytes)
-      bytes -= buff.length
+  _stream_bytes: (bytes, emitObj, nextState) ->
+    log.debug "_stream_bytes: arranging to stream #{bytes}"
+    streamer = new ByteStreamer({bytes: bytes, emitObj:emitObj, nextState: nextState, buffer: @buffer, decoder: this})
+    @_switch_state streamer.stream_bytes, "byte_streamer_state"
+    streamer.stream_bytes()
+
+class ByteStreamer
+  constructor: (options) ->
+    {@bytes,@emitObj,@nextState,@buffer,@decoder} = options
+  stream_bytes: () =>
+    while @bytes > 0
+      buff = @buffer.easy_consume(@bytes)
+      @bytes -= buff.length
       obj = vrs.dicom_raw(buff)
-      log.debug {emit: obj.log_summary(), remaining: bytes}, "_stream_bytes: emitting raw buffer"
-      @emit obj
-    if emitObj?
-      log.debug {emit: emitObj.log_summary()}, "_stream_bytes: done, emitting post-stream object"
-      @emit emitObj
-    if not nextState?
-      nextState = @_decode_dataset
-    @_switch_state nextState, "_stream_bytes nextState!"
+      log.debug {emit: obj.log_summary(), remaining: @bytes}, "stream_bytes: emitting raw buffer"
+      @decoder.emit obj
+    if @emitObj?
+      log.debug {emit: @emitObj.log_summary()}, "_stream_bytes: done, emitting post-stream object"
+      @decoder.emit @emitObj
+    if not @nextState?
+      @nextState = @decoder.decode_dataset
+    @decoder._switch_state(@nextState, "stream_bytes nextState")
+
 
 if require.main is module
   fs.createReadStream process.argv[2] #, {highWaterMark: 32}
