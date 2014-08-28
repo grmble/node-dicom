@@ -86,9 +86,11 @@ class ReadBuffer
 
   # will consume at most bytes, as much as we have right now
   # this will avoid copying if streaming out bulk data
+  # also this will throw a special NeedMoreInput that
+  # will not cause the buffer state restored.
   easy_consume: (bytes) ->
     if @length == 0
-      throw new NeedMoreInput(1)
+      throw new NeedMoreInput(0, true)
     end = @offset + bytes
     buff = @buffers[0]
     if end > buff.length
@@ -141,7 +143,7 @@ class ReadBuffer
     return if idx >= 0 then idx + 1 else 0
   
 class NeedMoreInput extends Error
-  constructor: (@needMoreInput) ->
+  constructor: (@needMoreInput, @doNotRestore) ->
     super("Need #{@needMoreInput} more input.")
 
 module.exports = ReadBuffer

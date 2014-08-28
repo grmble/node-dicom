@@ -1,11 +1,14 @@
 (A) Datafile parsing
+(A) Parsing of encapsulated PixelData
 (A) Flush/check for remaining stack.
+(A) Transfer syntax switch / metadata parsing
 (B) Switch charsets after 0008,0005 SpecificCharacterSet
 (C) PN component groups
 (D) undefined instead of 'undefined' for undefined VR elements
 (E) Test defined length SQ
 (E) Test encapsulated OB
 (E) Test undefined length UN
+(E) Test reading big endian data.
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
 x (A) Content streaming.
 x (A) Finish porting read behaviour from vrs.py

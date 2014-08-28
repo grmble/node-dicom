@@ -18,10 +18,16 @@ class UID
 class TransferSyntax extends UID
   endianess: () ->
     # only ExplicitVRBigEndian is big endian
-    if @name == 'ExplicitVRLittleEndian' then vrs.BIG_ENDIAN else vrs.LITTLE_ENDIAN
+    if @name == 'ExplicitVRBigEndian' then vrs.BIG_ENDIAN else vrs.LITTLE_ENDIAN
 
   is_explicit: () ->
     'Implicit' not in @name
+
+  make_context: (baseCtx) ->
+    ctx = new vrs.Context(baseCtx)
+    ctx.endianess = @endianess()
+    ctx.explicit = @is_explicit()
+    return ctx
 
   value_length_bytes: (vr) ->
     if @is_explicit() then vr.explicit_value_length_bytes else vr.implicit_value_length_bytes

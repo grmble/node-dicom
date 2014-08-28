@@ -195,6 +195,13 @@ class Context
 #
 # They keep track of end positions for nested data elements,
 # and actions to perform once that position is reached.
+#
+# Note that the actions will only be performed when
+# the context is autopopped, not when and Sequence/Item
+# Delimitation item ends the context.
+#
+# This is because the end-action is used to emit
+# end-events, even without the end item from the dicom stream.
 ##
 class CSObj # an entry in the context stack
   constructor: (@context, @end_position, @action) ->
@@ -209,20 +216,26 @@ class ContextStack
   ##
   push: (context, end_position, action) ->
     csobj = new CSObj(context, end_position, action)
-    @_stack.push csobj
+    log.debug "pushing context: #{csobj}"
+    rc = @_stack.push csobj
+    log.debug {context: @log_summary()}, "pushed context, this is current now!"
 
   pop: () ->
-    csobj = @_stack.pop
-    if csobj.action
-      csobj.action()
+    csobj = @_stack.pop()
+    log.debug {context: @log_summary()}, "popped context stack, this is current now!"
     csobj.context
 
   handle_autopops: (pos) ->
     top = @_stack[@_stack.length - 1]
-    if top.end_position? and top.endposition <= pos
-      dbg "handle_autopops: #{top.end_position} <= #{pos}"
-      top.action()
-      @_stack.pop()
+    if top.end_position?
+      if pos < top.end_position
+        log.debug "handle_autopops: pos #{pos}, not reached end pos #{top.end_position} xxx"
+      else
+        log.debug "handle_autopops: pos #{pos}, reached end pos #{top.end_position} xxx"
+        top.action()
+        @_stack.pop()
+    else
+      log.debug "handle_autopops: stream position #{pos}, but no context with autopop on top"
     this
 
   top: () ->
@@ -234,7 +247,7 @@ class ContextStack
       endianess: context.endianess
       charset: context.charset
       explicit: context.explicit
-      encapsulaged: context.encapsulated
+      encapsulated: context.encapsulated
       stack_depth: @_stack.length
 
 
@@ -329,7 +342,7 @@ class VR
   # stream the element out (well, the byte buffers anyway)
   stream_element: (element, readbuffer, decoder, value_length) ->
     obj = new DicomEvent(element, this, null, "start_element")
-    log.debug {emit: obj.log_summary}, "stream_element: emitting start_element"
+    log.debug {emit: obj.log_summary()}, "stream_element: emitting start_element"
     obj = new DicomEvent(element, this, null, "end_element")
     decoder._stream_bytes(value_length, obj)
 
@@ -463,7 +476,7 @@ class OtherVR extends FixedLength
 
   # consume and emit - allows us to override in subclasses
   consume_and_emit: (element, readbuffer, decoder, value_length) ->
-    if not value_length
+    if not value_length?
       value_length = @consume_value_length(readbuffer)
     if value_length == UNDEFINED_LENGTH
       throw new DicomError("OtherVR::consume_and_emit is not prepared to handle UNDEFINED_LENGTH")
@@ -491,10 +504,11 @@ class UN extends OtherVR
       # just stream it out, like all other OtherVRs
       return super(element, readbuffer, decoder, value_length)
     end_cb = () ->
-      obj = new DicomEvent(element, this, null, "end_sequence")
-      log.debug {emit: obj.log_summary()}, "UN undefined length end callback - emitting end_sequence"
-      decoder.emit(obj)
-    decoder.context.push(decoder.context.top(), null, end_cb)
+      _obj = new DicomEvent(element, this, null, "end_sequence")
+      log.debug {emit: _obj.log_summary()}, "UN undefined length end callback - emitting end_sequence"
+      decoder.emit(_obj)
+    implicit_context = new Context(decoder.context.top(), null, null, false)
+    decoder.context.push(implicit_context, null, end_cb)
 
     obj = new DicomEvent(element, this, null, "start_sequence")
     log.debug {emit: obj.log_summary()}, "UN undefined length - emitting start_sequence"
@@ -537,9 +551,9 @@ class SQ extends VR
     if value_length != UNDEFINED_LENGTH
       end_position = readbuffer.stream_position + value_length
     end_cb = () ->
-      obj = new DicomEvent(element, this, null, "end_sequence")
-      log.debug {emit: obj.log_summary()}, "SQ end callback - emitting end_sequence"
-      decoder.emit(obj)
+      _obj = new DicomEvent(element, this, null, "end_sequence")
+      log.debug {emit: _obj.log_summary()}, "SQ end callback - emitting end_sequence"
+      decoder.emit(_obj)
     decoder.context.push(decoder.context.top(), end_position, end_cb)
     obj = new DicomEvent(element, this, null, "start_sequence")
     log.debug {emit: obj.log_summary()}, "SQ::consume_and_emit - emitting start_sequence"
