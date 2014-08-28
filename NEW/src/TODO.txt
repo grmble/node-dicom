@@ -1,10 +1,9 @@
-(A) Tag dictionary "OB or OW" has defined semantics for ImplicitVR +Decoder
-(A) Transfer syntax switch / metadata parsing +Decoder
-(A) strict mode +Decoder
-(B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
 (B) Implement Dataset +Dataset
 (B) Implement Encoder +Encoder
+(B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
 (C) PN component groups +Decoder
+(C) Tag dictionary "OB or OW" / ImplicitVR OW +Decoder
+(C) Transfer syntax switch / metadata parsing +Decoder
 (D) undefined instead of 'undefined' for undefined VR elements +Decoder
 (E) Test defined length SQ +Testing
 (E) Test encapsulated OB +Testing
@@ -14,6 +13,7 @@ Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
 x (A) ByteStreamer object - resuming with correct byte count
 x (A) Content streaming.
 x (A) Datafile parsing
+x (A) External Bunyan Configuration
 x (A) Finish porting read behaviour from vrs.py
 x (A) Flush/check for remaining stack.
 x (A) Parsing of encapsulated PixelData

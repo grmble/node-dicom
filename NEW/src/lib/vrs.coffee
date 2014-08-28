@@ -2,8 +2,7 @@
 #
 #
 
-bunyan = require "bunyan"
-log = bunyan.createLogger {name: "dicom.vrs", level:'debug'}
+log = require("./logger")("vrs")
 
 UNDEFINED_LENGTH = 0xFFFFFFFF
 
@@ -216,26 +215,26 @@ class ContextStack
   ##
   push: (context, end_position, action) ->
     csobj = new CSObj(context, end_position, action)
-    log.debug "pushing context: #{csobj}"
+    log.trace("pushing context: #{csobj}") if log.trace()
     rc = @_stack.push csobj
-    log.debug {context: @log_summary()}, "pushed context, this is current now!"
+    log.trace({context: @log_summary()}, "pushed context, this is current now!") if log.trace()
 
   pop: () ->
     csobj = @_stack.pop()
-    log.debug {context: @log_summary()}, "popped context stack, this is current now!"
+    log.trace({context: @log_summary()}, "popped context stack, this is current now!") if log.trace()
     csobj.context
 
   handle_autopops: (pos) ->
     top = @_stack[@_stack.length - 1]
     if top.end_position?
       if pos < top.end_position
-        log.debug "handle_autopops: pos #{pos}, not reached end pos #{top.end_position} xxx"
+        log.trace("handle_autopops: pos #{pos}, not reached end pos #{top.end_position}") if log.trace()
       else
-        log.debug "handle_autopops: pos #{pos}, reached end pos #{top.end_position} xxx"
+        log.trace("handle_autopops: pos #{pos}, reached end pos #{top.end_position}") if log.trace()
         top.action()
         @_stack.pop()
     else
-      log.debug "handle_autopops: stream position #{pos}, but no context with autopop on top"
+      log.trace("handle_autopops: stream position #{pos}, but no context with autopop on top") if log.trace()
     this
 
   top: () ->
@@ -341,14 +340,14 @@ class VR
     if value_length < (decoder.streaming_value_length_minimum ? 256)
       @buffer = readbuffer.consume(value_length)
       obj = new DicomEvent(element, this, null, "element")
-      log.debug {emit: obj.log_summary()}, "VR::_consume_and_emit: emitting element"
+      log.debug({emit: obj.log_summary()}, "VR::_consume_and_emit: emitting element") if log.debug()
     else
       @stream_element(element, readbuffer, decoder, value_length)
   
   # stream the element out (well, the byte buffers anyway)
   stream_element: (element, readbuffer, decoder, value_length) ->
     obj = new DicomEvent(element, this, null, "start_element")
-    log.debug {emit: obj.log_summary()}, "stream_element: emitting start_element"
+    log.debug({emit: obj.log_summary()}, "stream_element: emitting start_element") if log.debug()
     obj = new DicomEvent(element, this, null, "end_element")
     decoder._stream_bytes(value_length, obj)
 
@@ -492,7 +491,7 @@ class OB extends OtherVR
     context = decoder.context
     context.push(new Context(context.top(), undefined, undefined, undefined, true))
     obj = new DicomEvent(element, this, undefined, "start_element")
-    log.debug {emit: obj.log_summary()}, "OB::consume_and_emit encapsulated start_element"
+    log.debug({emit: obj.log_summary()}, "OB::consume_and_emit encapsulated start_element") if log.debug()
     decoder.emit obj
 
 ##
@@ -504,19 +503,19 @@ class UN extends OtherVR
   # UN may be of undefined length if it is really a private sequence tag
   consume_and_emit: (element, readbuffer, decoder) ->
     value_length = @consume_value_length(readbuffer)
-    log.debug {length: value_length}, "UN consume and emit"
+    log.debug({length: value_length}, "UN consume and emit") if log.debug()
     if value_length != UNDEFINED_LENGTH
       # just stream it out, like all other OtherVRs
       return @_consume_and_emit_known_value_length(element, readbuffer, decoder, value_length)
     end_cb = () ->
       _obj = new DicomEvent(element, this, null, "end_sequence")
-      log.debug {emit: _obj.log_summary()}, "UN undefined length end callback - emitting end_sequence"
+      log.debug({emit: _obj.log_summary()}, "UN undefined length end callback - emitting end_sequence") if log.debug()
       decoder.emit(_obj)
     implicit_context = new Context(decoder.context.top(), null, null, false)
     decoder.context.push(implicit_context, null, end_cb)
 
     obj = new DicomEvent(element, this, null, "start_sequence")
-    log.debug {emit: obj.log_summary()}, "UN undefined length - emitting start_sequence"
+    log.debug({emit: obj.log_summary()}, "UN undefined length - emitting start_sequence") if log.debug()
     decoder.emit obj
 
 ##
@@ -551,17 +550,17 @@ class SQ extends VR
 
   consume_and_emit: (element, readbuffer, decoder) ->
     value_length = @consume_value_length(readbuffer)
-    log.debug {length: value_length}, "SQ consume and emit"
+    log.debug({length: value_length}, "SQ consume and emit") if log.debug()
     end_position = undefined
     if value_length != UNDEFINED_LENGTH
       end_position = readbuffer.stream_position + value_length
     end_cb = () ->
       _obj = new DicomEvent(element, this, null, "end_sequence")
-      log.debug {emit: _obj.log_summary()}, "SQ end callback - emitting end_sequence"
+      log.debug({emit: _obj.log_summary()}, "SQ end callback - emitting end_sequence") if log.debug()
       decoder.emit(_obj)
     decoder.context.push(decoder.context.top(), end_position, end_cb)
     obj = new DicomEvent(element, this, null, "start_sequence")
-    log.debug {emit: obj.log_summary()}, "SQ::consume_and_emit - emitting start_sequence"
+    log.debug({emit: obj.log_summary()}, "SQ::consume_and_emit - emitting start_sequence") if log.debug()
     decoder.emit obj
 
 

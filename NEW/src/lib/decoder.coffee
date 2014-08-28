@@ -14,9 +14,8 @@ fs = require("fs")
 stream = require("stream")
 bl = require("bl")
 printf = require("printf")
-bunyan = require("bunyan")
 
-log = bunyan.createLogger {name: "dicom.decoder", level:'debug'}
+log = require("./logger")('decoder')
 
 ##
 #
@@ -92,10 +91,11 @@ class Decoder extends stream.Transform
 
   _decode_dataelement: () =>
     @saved = @buffer.copy()
-    log.trace {buffer: @saved.log_summary()}, "_decode_dataelement: saved buffer state"
+    log.trace({buffer: @saved.log_summary()}, "_decode_dataelement: saved buffer state") if log.trace()
+
     @context.handle_autopops(@buffer.stream_position)
     tag = (new vrs.AT(@context.top())).consume_value(@buffer)
-    log.debug({tag: printf("%08x", tag)}, "decoded tag")
+    log.debug({tag: printf("%08x", tag)}, "decoded tag") if log.debug()
     tag_str = printf("%08X", tag)
     # comparing tags somehow does not work ...
     switch tag_str
@@ -170,7 +170,7 @@ class Decoder extends stream.Transform
       vrstr = tagdef.vr
     else
       vrstr = @buffer.consume(2).toString('binary')
-    log.debug {vr: vrstr}, "_handle_element"
+    log.debug({vr: vrstr}, "_handle_element") if log.debug()
     vr = vrs.for_name(vrstr, @context.top())
     vr.consume_and_emit(tagdef, @buffer, this)
 
@@ -182,7 +182,7 @@ class Decoder extends stream.Transform
     if @context.top().encapsulated
       # we are in encapsulated OB ... just stream the content out
       obj = vrs.dicom_command(element, "start_item")
-      log.debug {emit: obj.log_summary()}, "_handle_item: emitting start_item"
+      log.debug({emit: obj.log_summary()}, "_handle_item: emitting start_item") if log.debug()
       _obj = vrs.dicom_command(element, "end_item")
       @_stream_bytes(value_length, _obj)
       return undefined # no emit by main loop, thank you
@@ -192,11 +192,11 @@ class Decoder extends stream.Transform
         end_position = @buffer.stream_position + value_length
       end_cb = () =>
         _obj = vrs.dicom_command(element, 'end_item')
-        log.debug {emit: _obj.log_summary()}, "_handle_item end callback: emitting end_item"
+        log.debug({emit: _obj.log_summary()}, "_handle_item end callback: emitting end_item") if log.debug()
         @emit _obj
       @context.push(@context.top(), end_position, end_cb)
       obj = vrs.dicom_command(element, 'start_item')
-      log.debug {emit: obj.log_summary()}, "_handle_item: emitting start_item: value_length: #{value_length}"
+      log.debug({emit: obj.log_summary()}, "_handle_item: emitting start_item: value_length: #{value_length}") if log.debug()
       @emit obj
 
   _handle_itemdelimitation: (tag) ->
@@ -204,7 +204,7 @@ class Decoder extends stream.Transform
     value_length = @_consume_std_value_length()
     obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, 'end_item')
     @context.pop()
-    log.debug {emit: obj.log_summary()}, "_handle_itemdelimitation: emitting end_item"
+    log.debug({emit: obj.log_summary()}, "_handle_itemdelimitation: emitting end_item") if log.debug()
 
   _handle_sequencedelimitation: (tag) ->
     # always standard ts
@@ -216,7 +216,7 @@ class Decoder extends stream.Transform
       # ends the pixeldata element, not some sequence
       command = 'end_element'
     obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, command)
-    log.debug {emit: obj.log_summary()}, "_handle_sequencedelimitation: emitting end_sequence"
+    log.debug({emit: obj.log_summary()}, "_handle_sequencedelimitation: emitting end_sequence") if log.debug()
 
   # stream x bytes out
   # this switches states to itself in case the buffer
@@ -239,10 +239,10 @@ class ByteStreamer
       buff = @buffer.easy_consume(@bytes)
       @bytes -= buff.length
       obj = vrs.dicom_raw(buff)
-      log.debug {emit: obj.log_summary(), remaining: @bytes}, "stream_bytes: emitting raw buffer"
+      log.debug({emit: obj.log_summary(), remaining: @bytes}, "stream_bytes: emitting raw buffer") if log.debug()
       @decoder.emit obj
     if @emitObj?
-      log.debug {emit: @emitObj.log_summary()}, "_stream_bytes: done, emitting post-stream object"
+      log.debug({emit: @emitObj.log_summary()}, "_stream_bytes: done, emitting post-stream object") if log.debug()
       @decoder.emit @emitObj
     if not @nextState?
       @nextState = @decoder.decode_dataset
