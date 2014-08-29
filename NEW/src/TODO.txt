@@ -1,8 +1,8 @@
-(A) Implement json model, http://medical.nema.org/dicom/2013/output/chtml/part18/sect_F.2.html
 (A) Test defined length SQ +Testing
 (A) Test encapsulated OB +Testing
 (A) Test reading big endian data. +Testing
 (A) Test undefined length UN +Testing
+(B) Bug: partial dataelement at end of file should be an error
 (B) Implement Dataset +Dataset
 (B) Implement Encoder +Encoder
 (B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
@@ -17,6 +17,7 @@ x (A) Datafile parsing
 x (A) External Bunyan Configuration
 x (A) Finish porting read behaviour from vrs.py
 x (A) Flush/check for remaining stack.
+x (A) Implement json model, http://medical.nema.org/dicom/2013/output/chtml/part18/sect_F.2.html
 x (A) Parsing of encapsulated PixelData
 x (B) Encapsulated content streaming.
 x (B) UN items with undefined length.

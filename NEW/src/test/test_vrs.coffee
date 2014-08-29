@@ -149,3 +149,13 @@ exports.StringPaddingTest =
     test.deepEqual new Buffer("1.2\x00", "binary"), lo.buffer
     test.deepEqual ["1.2"], lo.values()
     test.done()
+
+#
+# binary vrs should produce base64 encoded values ...
+#
+exports.OBTest =
+  "test base64 values": (test) ->
+    test.expect 1
+    ob = new vrs.OB(DEF_CTX, new Buffer("asdf"))
+    test.deepEqual ["YXNkZg=="], ob.values()
+    test.done()

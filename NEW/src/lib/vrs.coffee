@@ -341,6 +341,7 @@ class VR
       @buffer = readbuffer.consume(value_length)
       obj = new DicomEvent(element, this, null, "element")
       log.debug({emit: obj.log_summary()}, "VR::_consume_and_emit: emitting element") if log.debug()
+      decoder.push obj
     else
       @stream_element(element, readbuffer, decoder, value_length)
   
@@ -348,6 +349,7 @@ class VR
   stream_element: (element, readbuffer, decoder, value_length) ->
     obj = new DicomEvent(element, this, null, "start_element")
     log.debug({emit: obj.log_summary()}, "stream_element: emitting start_element") if log.debug()
+    decoder.push obj
     obj = new DicomEvent(element, this, null, "end_element")
     decoder._stream_bytes(value_length, obj)
 
@@ -473,7 +475,7 @@ class US extends FixedLength
 class OtherVR extends FixedLength
   explicit_value_length_bytes: 6
   values: () ->
-    @buffer
+    [@buffer.toString('base64')]
 
 
 ##
@@ -492,7 +494,7 @@ class OB extends OtherVR
     context.push(new Context(context.top(), undefined, undefined, undefined, true))
     obj = new DicomEvent(element, this, undefined, "start_element")
     log.debug({emit: obj.log_summary()}, "OB::consume_and_emit encapsulated start_element") if log.debug()
-    decoder.emit obj
+    decoder.push obj
 
 ##
 #
@@ -510,13 +512,13 @@ class UN extends OtherVR
     end_cb = () ->
       _obj = new DicomEvent(element, this, null, "end_sequence")
       log.debug({emit: _obj.log_summary()}, "UN undefined length end callback - emitting end_sequence") if log.debug()
-      decoder.emit(_obj)
+      decoder.push _obj
     implicit_context = new Context(decoder.context.top(), null, null, false)
     decoder.context.push(implicit_context, null, end_cb)
 
     obj = new DicomEvent(element, this, null, "start_sequence")
     log.debug({emit: obj.log_summary()}, "UN undefined length - emitting start_sequence") if log.debug()
-    decoder.emit obj
+    decoder.push obj
 
 ##
 #
@@ -557,11 +559,11 @@ class SQ extends VR
     end_cb = () ->
       _obj = new DicomEvent(element, this, null, "end_sequence")
       log.debug({emit: _obj.log_summary()}, "SQ end callback - emitting end_sequence") if log.debug()
-      decoder.emit(_obj)
+      decoder.push _obj
     decoder.context.push(decoder.context.top(), end_position, end_cb)
     obj = new DicomEvent(element, this, null, "start_sequence")
     log.debug({emit: obj.log_summary()}, "SQ::consume_and_emit - emitting start_sequence") if log.debug()
-    decoder.emit obj
+    decoder.push obj
 
 
 _ends_with = (str, char) ->

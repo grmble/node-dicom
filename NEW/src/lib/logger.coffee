@@ -25,7 +25,7 @@ STREAM_DICT =
 _env = (what, name) ->
   _what = what.toUpperCase()
   _name = name.toUpperCase()
-  return (process.env["#{ENV_PREFIX}_#{_what}_#{name}"] ?
+  return (process.env["#{ENV_PREFIX}_#{_what}_#{_name}"] ?
     process.env["#{ENV_PREFIX}_#{_what}"] ?
     DEFAULTS[_what])
 

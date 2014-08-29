@@ -12,7 +12,6 @@ catch err
 
 fs = require("fs")
 stream = require("stream")
-bl = require("bl")
 printf = require("printf")
 
 log = require("./logger")('decoder')
@@ -35,6 +34,8 @@ log = require("./logger")('decoder')
 ##
 class Decoder extends stream.Transform
   constructor: (options)->
+    if not (this instanceof Decoder)
+      return new Decoder(options)
     super(options)
     @streaming_value_length_minimum = options?.streaming_value_length_minimum
     @_writableState.objectMode = false
@@ -77,7 +78,7 @@ class Decoder extends stream.Transform
     else
       log.debug({buffer: @buffer.length context: @context.stack_depth()},
         "_flush: can not flush (length should be 0, stack depth 1)")
-      @emit new vrs.UnexpectedEndOfFile()
+      @emit 'error', new vrs.UnexpectedEndOfFile()
 
   _switch_state: (state, msg) ->
     if not state
@@ -183,6 +184,7 @@ class Decoder extends stream.Transform
       # we are in encapsulated OB ... just stream the content out
       obj = vrs.dicom_command(element, "start_item")
       log.debug({emit: obj.log_summary()}, "_handle_item: emitting start_item") if log.debug()
+      @push obj
       _obj = vrs.dicom_command(element, "end_item")
       @_stream_bytes(value_length, _obj)
       return undefined # no emit by main loop, thank you
@@ -193,11 +195,11 @@ class Decoder extends stream.Transform
       end_cb = () =>
         _obj = vrs.dicom_command(element, 'end_item')
         log.debug({emit: _obj.log_summary()}, "_handle_item end callback: emitting end_item") if log.debug()
-        @emit _obj
+        @push _obj
       @context.push(@context.top(), end_position, end_cb)
       obj = vrs.dicom_command(element, 'start_item')
       log.debug({emit: obj.log_summary()}, "_handle_item: emitting start_item: value_length: #{value_length}") if log.debug()
-      @emit obj
+      @push obj
 
   _handle_itemdelimitation: (tag) ->
     # always standard ts
@@ -205,6 +207,7 @@ class Decoder extends stream.Transform
     obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, 'end_item')
     @context.pop()
     log.debug({emit: obj.log_summary()}, "_handle_itemdelimitation: emitting end_item") if log.debug()
+    @push obj
 
   _handle_sequencedelimitation: (tag) ->
     # always standard ts
@@ -217,6 +220,7 @@ class Decoder extends stream.Transform
       command = 'end_element'
     obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, command)
     log.debug({emit: obj.log_summary()}, "_handle_sequencedelimitation: emitting end_sequence") if log.debug()
+    @push obj
 
   # stream x bytes out
   # this switches states to itself in case the buffer
@@ -240,14 +244,15 @@ class ByteStreamer
       @bytes -= buff.length
       obj = vrs.dicom_raw(buff)
       log.debug({emit: obj.log_summary(), remaining: @bytes}, "stream_bytes: emitting raw buffer") if log.debug()
-      @decoder.emit obj
+      @decoder.emit 'data', obj
     if @emitObj?
       log.debug({emit: @emitObj.log_summary()}, "_stream_bytes: done, emitting post-stream object") if log.debug()
-      @decoder.emit @emitObj
+      @decoder.emit 'data', @emitObj
     if not @nextState?
       @nextState = @decoder.decode_dataset
     @decoder._switch_state(@nextState, "stream_bytes nextState")
 
+module.exports = Decoder
 
 if require.main is module
   fs.createReadStream process.argv[2] #, {highWaterMark: 32}
