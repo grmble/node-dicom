@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env coffee
 readbuffer = require("../lib/readbuffer")
 
 exports.ReadBufferTest =

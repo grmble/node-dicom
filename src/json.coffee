@@ -80,7 +80,7 @@ class JsonEncoder extends stream.Transform
     start = ',\n'
     if @fresh
       start = '{\n'
-    @push printf('%s%s: {"vr": "SQ", "Values": [', start, key)
+    @push printf('%s%s: {"vr": "SQ", "Value": [', start, key)
     @fresh = true
     @depth++
 
@@ -99,7 +99,7 @@ class JsonEncoder extends stream.Transform
   end_item: (event) ->
     return if @ignore
     if @fresh
-      @push "null,"
+      @push "{}"
     else
       @push "}"
 
@@ -136,6 +136,7 @@ if require.main is module
     console.log("Error:", err, "JSON:", json)
   require("fs").createReadStream(process.argv[2]).pipe decoder
   decoder.pipe encoder
-  encoder.pipe sink
+  # encoder.pipe sink
+  encoder.pipe process.stdout
 
 
