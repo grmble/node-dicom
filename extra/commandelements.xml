@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><commandelements>
+<el tag="00000000" keyword="CommandGroupLength" vr="UL" vm="1" retired="true">Command Group Length</el>
+<el tag="00000001" keyword="CommandLengthToEnd" vr="UL" vm="1" retired="true">Command Length to End</el>
+<el tag="00000002" keyword="AffectedSOPClassUID" vr="UI" vm="1" retired="true">Affected SOP Class UID</el>
+<el tag="00000003" keyword="RequestedSOPClassUID" vr="UI" vm="1" retired="true">Requested SOP Class UID</el>
+<el tag="00000010" keyword="CommandRecognitionCode" vr="SH" vm="1" retired="true">Command Recognition Code</el>
+<el tag="00000100" keyword="CommandField" vr="US" vm="1" retired="true">Command Field</el>
+<el tag="00000110" keyword="MessageID" vr="US" vm="1" retired="true">Message ID</el>
+<el tag="00000120" keyword="MessageIDBeingRespondedTo" vr="US" vm="1" retired="true">Message ID Being Responded To</el>
+<el tag="00000200" keyword="Initiator" vr="AE" vm="1" retired="true">Initiator</el>
+<el tag="00000300" keyword="Receiver" vr="AE" vm="1" retired="true">Receiver</el>
+<el tag="00000400" keyword="FindLocation" vr="AE" vm="1" retired="true">Find Location</el>
+<el tag="00000600" keyword="MoveDestination" vr="AE" vm="1" retired="true">Move Destination</el>
+<el tag="00000700" keyword="Priority" vr="US" vm="1" retired="true">Priority</el>
+<el tag="00000800" keyword="CommandDataSetType" vr="US" vm="1" retired="true">Command Data Set Type</el>
+<el tag="00000850" keyword="NumberOfMatches" vr="US" vm="1" retired="true">Number of Matches</el>
+<el tag="00000860" keyword="ResponseSequenceNumber" vr="US" vm="1" retired="true">Response Sequence Number</el>
+<el tag="00000900" keyword="Status" vr="US" vm="1" retired="true">Status</el>
+<el tag="00000901" keyword="OffendingElement" vr="AT" vm="1-n" retired="true">Offending Element</el>
+<el tag="00000902" keyword="ErrorComment" vr="LO" vm="1" retired="true">Error Comment</el>
+<el tag="00000903" keyword="ErrorID" vr="US" vm="1" retired="true">Error ID</el>
+<el tag="00001000" keyword="AffectedSOPInstanceUID" vr="UI" vm="1" retired="true">Affected SOP Instance UID</el>
+<el tag="00001001" keyword="RequestedSOPInstanceUID" vr="UI" vm="1" retired="true">Requested SOP Instance UID</el>
+<el tag="00001002" keyword="EventTypeID" vr="US" vm="1" retired="true">Event Type ID</el>
+<el tag="00001005" keyword="AttributeIdentifierList" vr="AT" vm="1-n" retired="true">Attribute Identifier List</el>
+<el tag="00001008" keyword="ActionTypeID" vr="US" vm="1" retired="true">Action Type ID</el>
+<el tag="00001020" keyword="NumberOfRemainingSuboperations" vr="US" vm="1" retired="true">Number of Remaining Sub-operations</el>
+<el tag="00001021" keyword="NumberOfCompletedSuboperations" vr="US" vm="1" retired="true">Number of Completed Sub-operations</el>
+<el tag="00001022" keyword="NumberOfFailedSuboperations" vr="US" vm="1" retired="true">Number of Failed Sub-operations</el>
+<el tag="00001023" keyword="NumberOfWarningSuboperations" vr="US" vm="1" retired="true">Number of Warning Sub-operations</el>
+<el tag="00001030" keyword="MoveOriginatorApplicationEntityTitle" vr="AE" vm="1" retired="true">Move Originator Application Entity Title</el>
+<el tag="00001031" keyword="MoveOriginatorMessageID" vr="US" vm="1" retired="true">Move Originator Message ID</el>
+<el tag="00004000" keyword="DialogReceiver" vr="LT" vm="1" retired="true">Dialog Receiver</el>
+<el tag="00004010" keyword="TerminalType" vr="LT" vm="1" retired="true">Terminal Type</el>
+<el tag="00005010" keyword="MessageSetID" vr="SH" vm="1" retired="true">Message Set ID</el>
+<el tag="00005020" keyword="EndMessageID" vr="SH" vm="1" retired="true">End Message ID</el>
+<el tag="00005110" keyword="DisplayFormat" vr="LT" vm="1" retired="true">Display Format</el>
+<el tag="00005120" keyword="PagePositionID" vr="LT" vm="1" retired="true">Page Position ID</el>
+<el tag="00005130" keyword="TextFormatID" vr="CS" vm="1" retired="true">Text Format ID</el>
+<el tag="00005140" keyword="NormalReverse" vr="CS" vm="1" retired="true">Normal/Reverse</el>
+<el tag="00005150" keyword="AddGrayScale" vr="CS" vm="1" retired="true">Add Gray Scale</el>
+<el tag="00005160" keyword="Borders" vr="CS" vm="1" retired="true">Borders</el>
+<el tag="00005170" keyword="Copies" vr="IS" vm="1" retired="true">Copies</el>
+<el tag="00005180" keyword="CommandMagnificationType" vr="CS" vm="1" retired="true">Command Magnification Type</el>
+<el tag="00005190" keyword="Erase" vr="CS" vm="1" retired="true">Erase</el>
+<el tag="000051A0" keyword="Print" vr="CS" vm="1" retired="true">Print</el>
+<el tag="000051B0" keyword="Overlays" vr="US" vm="1-n" retired="true">Overlays</el>
+</commandelements>

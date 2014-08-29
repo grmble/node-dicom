@@ -1,9 +1,8 @@
-/nbproject/
 /node_modules/
-/examples/
-/XXX/
+/lib/
 *~
 *.x
 x.*
+*.swp
 npm-debug.log
-/*-log4js.json
+tags
