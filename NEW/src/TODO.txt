@@ -1,3 +1,8 @@
+(A) Implement json model, http://medical.nema.org/dicom/2013/output/chtml/part18/sect_F.2.html
+(A) Test defined length SQ +Testing
+(A) Test encapsulated OB +Testing
+(A) Test reading big endian data. +Testing
+(A) Test undefined length UN +Testing
 (B) Implement Dataset +Dataset
 (B) Implement Encoder +Encoder
 (B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
@@ -5,10 +10,6 @@
 (C) Tag dictionary "OB or OW" / ImplicitVR OW +Decoder
 (C) Transfer syntax switch / metadata parsing +Decoder
 (D) undefined instead of 'undefined' for undefined VR elements +Decoder
-(E) Test defined length SQ +Testing
-(E) Test encapsulated OB +Testing
-(E) Test reading big endian data. +Testing
-(E) Test undefined length UN +Testing
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
 x (A) ByteStreamer object - resuming with correct byte count
 x (A) Content streaming.
