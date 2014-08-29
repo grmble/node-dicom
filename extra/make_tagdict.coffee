@@ -3,7 +3,7 @@
 fs = require("fs")
 printf = require("printf")
 xml2js = require("xml2js")
-tags = require("../../lib/tags.js")
+tags = require("../lib/tags.js")
 
 parse_file = (fn, cb) ->
   fs.readFile fn, "utf8", (err, content) ->

@@ -3,12 +3,8 @@
 
 vrs = require("./vrs")
 readbuffer = require("./readbuffer")
-try
-  uids = require("../lib/uids.js")
-  tags = require("../lib/tags.js")
-catch err
-  uids = require("../../lib/uids.js")
-  tags = require("../../lib/tags.js")
+uids = require("../lib/uids")
+tags = require("../lib/tags")
 
 fs = require("fs")
 stream = require("stream")

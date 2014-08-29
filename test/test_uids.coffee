@@ -1,12 +1,6 @@
 #! /usr/bin/env coffee
 
-# importing the compiled-to-js version is fast
-# importing coffeescript datadict is slow
-# we don't like slow
-try
-  uids = require "../lib/uids.js"
-catch err
-  uids = require "../../lib/uids.js"
+uids = require "../lib/uids"
 vrs = require "../lib/vrs"
 
 exports.TagsTest =

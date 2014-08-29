@@ -1,12 +1,6 @@
 #! /usr/bin/env coffee
 
-# importing the compiled-to-js version is fast
-# importing coffeescript datadict is slow
-# we don't like slow
-try
-  tags = require "../lib/tags.js"
-catch err
-  tags = require "../../lib/tags.js"
+tags = require "../lib/tags"
 
 exports.TagsTest =
   "test for_tag": (test) ->

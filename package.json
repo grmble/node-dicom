@@ -2,28 +2,33 @@
     "author": "Juergen Gmeiner",
     "name": "dicom",
     "description": "DICOM for node-js",
+    "keywords": ["DICOM"],
+    "license": "MIT",
     "version": "0.3.0-dev",
     "repository": {
         "type": "git",
         "url": "git@github.com:grmble/node-dicom.git"
     },
+    "bin": { "find-tags": "./bin/find-tags.js",
+        "find-uids": "./bin/find-uids.js"
+    },
     "scripts": {
+        "build": "coffee --compile --output lib/ src/",
+        "prepublish": "coffee --compile --output lib/ src/",
         "test": "nodeunit test"
     },
     "engines": {
-        "node": "0.11.x"
+        "node": ">0.11.0"
     },
     "dependencies": {
-        "log4js": "0.6.x",
-        "optimist": "0.6.x",
-
-        "printf": "0.1.x",
+        "printf": "0.2.x",
         "bunyan": "^1.0.1",
         "concat-stream": "^1.4.6"
     },
     "devDependencies": {
-        "nodeunit": "0.8.x",
-        "xml2js": "^0.4.4"
+        "coffee-script": "^1.8.0",
+        "nodeunit": "0.9.x",
+        "xml2js": "0.4.x"
     },
     "directories": {
         "lib": "./lib"
