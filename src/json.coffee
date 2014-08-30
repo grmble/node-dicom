@@ -129,6 +129,7 @@ class JsonSink extends ConcatStream
         cb(err)
       undefined
     @on 'error', (err) ->
+      log.debug {error: err}, "JsonSink: on error ... calling cb"
       cb(err)
       
 exports.JsonEncoder = JsonEncoder
@@ -165,24 +166,34 @@ get_value = (json, path...) ->
 get_vr = (json, path...) ->
   return get_element(json, path...)?.vr
 
-file2jsonstream = (fn) ->
+file2jsonstream = (fn, cb) ->
   fs.createReadStream fn
+  .on 'error', cb
   .pipe decoder {guess_header: true}
+  .on 'error', cb
   .pipe new JsonEncoder()
+  .on 'error', cb
 
 file2json = (fn, cb) ->
-  file2jsonstream(fn)
+  file2jsonstream(fn, cb)
   .pipe new JsonSink(cb)
+  .on 'error', cb
 
-gunzip2jsonstream = (fn) ->
+# cb is called for errors
+gunzip2jsonstream = (fn, cb) ->
   fs.createReadStream fn
+  .on 'error', cb
   .pipe zlib.createGunzip()
+  .on 'error', cb
   .pipe decoder {guess_header: true}
+  .on 'error', cb
   .pipe new JsonEncoder()
+  .on 'error', cb
 
 gunzip2json = (fn, cb) ->
-  gunzip2jsonstream(fn)
+  gunzip2jsonstream(fn, cb)
   .pipe new JsonSink(cb)
+  .on 'error', cb
 
 exports.get_element = get_element
 exports.get_values = get_values
@@ -194,6 +205,10 @@ exports.file2json = file2json
 exports.gunzip2json = gunzip2json
 
 
+_err_cb = (err) ->
+  console.error "Error:", err.stack
+  process.exit 1
+
 if require.main is module
   compressed = false
   if process.argv[2] == "-z"
@@ -202,8 +217,8 @@ if require.main is module
   else
     filename = process.argv[2]
   if compressed
-    input = exports.gunzip2jsonstream(filename)
+    input = gunzip2jsonstream(filename, _err_cb)
   else
-    input =exports.file2jsonstream(filename)
+    input = file2jsonstream(filename, _err_cb)
   input.pipe process.stdout
 
