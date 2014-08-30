@@ -183,11 +183,11 @@ class Context
   # * explicit: explicit or implicit ts in effect
   # * encapsulated: inside encapsulated OB
   ##
-  constructor: (ctx, endianess, charset, explicit, encapsulated) ->
-    @endianess = endianess ? ctx?.endianess ? LITTLE_ENDIAN
-    @charset = charset ? ctx?.charset ? "binary"
-    @explicit = explicit ? ctx?.explicit ? true
-    @encapsulated = encapsulated ? ctx?.encapsulated ? false
+  constructor: (ctx, obj) ->
+    @endianess = obj.endianess ? ctx?.endianess ? LITTLE_ENDIAN
+    @charset = obj.charset ? ctx?.charset ? "binary"
+    @explicit = obj.explicit ? ctx?.explicit ? true
+    @encapsulated = obj.encapsulated ? ctx?.encapsulated ? false
 
 ##
 # Stack of Dicom Contexts.
@@ -213,11 +213,25 @@ class ContextStack
   # push a new dicom context with optional end_position and action
   #
   ##
-  push: (context, end_position, action) ->
+  push: (obj, end_position, action) ->
+    context = new Context(@top() ? {}, obj)
     csobj = new CSObj(context, end_position, action)
     log.trace("pushing context: #{csobj}") if log.trace()
     rc = @_stack.push csobj
     log.trace({context: @log_summary()}, "pushed context, this is current now!") if log.trace()
+
+  ##
+  # replace the current dicom context
+  #
+  # only allowed at stack_depth = 1
+  #
+  ##
+  replace: (obj) ->
+    if @_stack.length > 1
+      throw new DicomError("ContextStack:replace not allowed unless stack depth = 1: #{@stack.length}")
+    context = new Context(@top(), obj)
+    @_stack[0].context = context
+    log.trace({context: @log_summary()}, "replaced root context") if log.trace()
 
   pop: () ->
     csobj = @_stack.pop()
@@ -233,12 +247,13 @@ class ContextStack
         log.trace("handle_autopops: pos #{pos}, reached end pos #{top.end_position}") if log.trace()
         top.action()
         @_stack.pop()
+        return @handle_autopops(pos)
     else
       log.trace("handle_autopops: stream position #{pos}, but no context with autopop on top") if log.trace()
     this
 
   top: () ->
-    @_stack[@_stack.length - 1].context
+    @_stack[@_stack.length - 1]?.context
 
   stack_depth: () ->
     @_stack.length
@@ -264,9 +279,9 @@ class DicomEvent
   log_summary: () ->
     summary = {}
     if @element
-      summary.element = @element.log_summary()
+      summary.element = @element.log_summary?()
     if @vr
-      summary.vr = @vr.log_summary()
+      summary.vr = @vr.log_summary?()
     if @raw
       summary.raw = @raw.length
     if @command
@@ -330,26 +345,24 @@ class VR
     @buffer = readbuffer.consume(value_length)
 
   # consume and emit - allows us to override in subclasses
-  consume_and_emit: (element, readbuffer, decoder) ->
+  consume_and_emit: (element, readbuffer, decoder, start_position) ->
     value_length = @consume_value_length(readbuffer)
-    @_consume_and_emit_known_value_length element, readbuffer, decoder, value_length
+    @_consume_and_emit_known_value_length element, readbuffer, decoder, start_position, value_length
 
-  _consume_and_emit_known_value_length: (element, readbuffer, decoder, value_length) ->
+  _consume_and_emit_known_value_length: (element, readbuffer, decoder, start_position, value_length) ->
     if value_length == UNDEFINED_LENGTH
       throw new DicomError("VR::consume_and_emit is not prepared to handle UNDEFINED_LENGTH")
     if value_length < (decoder.streaming_value_length_minimum ? 256)
       @buffer = readbuffer.consume(value_length)
       obj = new DicomEvent(element, this, null, "element")
-      log.debug({emit: obj.log_summary()}, "VR::_consume_and_emit: emitting element") if log.debug()
-      decoder.push obj
+      decoder.log_and_push obj
     else
       @stream_element(element, readbuffer, decoder, value_length)
   
   # stream the element out (well, the byte buffers anyway)
   stream_element: (element, readbuffer, decoder, value_length) ->
     obj = new DicomEvent(element, this, null, "start_element")
-    log.debug({emit: obj.log_summary()}, "stream_element: emitting start_element") if log.debug()
-    decoder.push obj
+    decoder.log_and_push obj
     obj = new DicomEvent(element, this, null, "end_element")
     decoder._stream_bytes(value_length, obj)
 
@@ -485,16 +498,15 @@ class OtherVR extends FixedLength
 ##
 class OB extends OtherVR
   # consume and emit - handle encapsulated pixeldata
-  consume_and_emit: (element, readbuffer, decoder) ->
+  consume_and_emit: (element, readbuffer, decoder, start_position) ->
     value_length = @consume_value_length(readbuffer)
     if value_length != UNDEFINED_LENGTH
-      return @_consume_and_emit_known_value_length(element, readbuffer, decoder, value_length)
+      return @_consume_and_emit_known_value_length(element, readbuffer, decoder, start_position, value_length)
     # push encaps context
     context = decoder.context
-    context.push(new Context(context.top(), undefined, undefined, undefined, true))
+    context.push {encapsulated: true}
     obj = new DicomEvent(element, this, undefined, "start_element")
-    log.debug({emit: obj.log_summary()}, "OB::consume_and_emit encapsulated start_element") if log.debug()
-    decoder.push obj
+    decoder.log_and_push obj
 
 ##
 #
@@ -503,22 +515,19 @@ class OB extends OtherVR
 ##
 class UN extends OtherVR
   # UN may be of undefined length if it is really a private sequence tag
-  consume_and_emit: (element, readbuffer, decoder) ->
+  consume_and_emit: (element, readbuffer, decoder, start_position) ->
     value_length = @consume_value_length(readbuffer)
     log.debug({length: value_length}, "UN consume and emit") if log.debug()
     if value_length != UNDEFINED_LENGTH
       # just stream it out, like all other OtherVRs
-      return @_consume_and_emit_known_value_length(element, readbuffer, decoder, value_length)
+      return @_consume_and_emit_known_value_length(element, readbuffer, decoder, start_position, value_length)
     end_cb = () ->
       _obj = new DicomEvent(element, this, null, "end_sequence")
-      log.debug({emit: _obj.log_summary()}, "UN undefined length end callback - emitting end_sequence") if log.debug()
-      decoder.push _obj
-    implicit_context = new Context(decoder.context.top(), null, null, false)
-    decoder.context.push(implicit_context, null, end_cb)
+      decoder.log_and_push _obj
+    decoder.context.push({explicit: false}, null, end_cb)
 
     obj = new DicomEvent(element, this, null, "start_sequence")
-    log.debug({emit: obj.log_summary()}, "UN undefined length - emitting start_sequence") if log.debug()
-    decoder.push obj
+    decoder.log_and_push obj
 
 ##
 #
@@ -550,20 +559,18 @@ class SQ extends VR
   values: () ->
     undefined
 
-  consume_and_emit: (element, readbuffer, decoder) ->
+  consume_and_emit: (element, readbuffer, decoder, start_position) ->
     value_length = @consume_value_length(readbuffer)
     log.debug({length: value_length}, "SQ consume and emit") if log.debug()
     end_position = undefined
     if value_length != UNDEFINED_LENGTH
-      end_position = readbuffer.stream_position + value_length
+      end_position = start_position + value_length
     end_cb = () ->
       _obj = new DicomEvent(element, this, null, "end_sequence")
-      log.debug({emit: _obj.log_summary()}, "SQ end callback - emitting end_sequence") if log.debug()
-      decoder.push _obj
-    decoder.context.push(decoder.context.top(), end_position, end_cb)
+      decoder.log_and_push _obj
+    decoder.context.push({}, end_position, end_cb)
     obj = new DicomEvent(element, this, null, "start_sequence")
-    log.debug({emit: obj.log_summary()}, "SQ::consume_and_emit - emitting start_sequence") if log.debug()
-    decoder.push obj
+    decoder.log_and_push obj
 
 
 _ends_with = (str, char) ->
@@ -731,7 +738,7 @@ class UI extends Stringish
 ##
 class UT extends Stringish
   allow_multiple_values: false
-  explicit_value_length: 6
+  explicit_value_length_bytes: 6
 
 
 _VR_DICT = {

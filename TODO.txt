@@ -1,14 +1,14 @@
-(A) Test defined length SQ +Testing
 (A) Test encapsulated OB +Testing
+(A) Test parsing ImplicitVR
 (A) Test reading big endian data. +Testing
 (A) Test undefined length UN +Testing
 (B) Bug: partial dataelement at end of file should be an error
-(B) Implement Dataset +Dataset
 (B) Implement Encoder +Encoder
 (B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
 (C) PN component groups +Decoder
 (C) Tag dictionary "OB or OW" / ImplicitVR OW +Decoder
 (C) Transfer syntax switch / metadata parsing +Decoder
+(D) Implement Dataset +Dataset
 (D) undefined instead of 'undefined' for undefined VR elements +Decoder
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
 x (A) ByteStreamer object - resuming with correct byte count
@@ -19,6 +19,7 @@ x (A) Finish porting read behaviour from vrs.py
 x (A) Flush/check for remaining stack.
 x (A) Implement json model, http://medical.nema.org/dicom/2013/output/chtml/part18/sect_F.2.html
 x (A) Parsing of encapsulated PixelData
+x (A) Test defined length SQ +Testing
 x (A) Work from master
 x (B) Encapsulated content streaming.
 x (B) UN items with undefined length.

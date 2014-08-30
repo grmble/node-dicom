@@ -23,11 +23,11 @@ class TransferSyntax extends UID
   is_explicit: () ->
     'Implicit' not in @name
 
-  make_context: (baseCtx) ->
-    ctx = new vrs.Context(baseCtx)
-    ctx.endianess = @endianess()
-    ctx.explicit = @is_explicit()
-    return ctx
+  make_context: () ->
+    obj =
+      endianess: @endianess()
+      explicit: @is_explicit()
+    return obj
 
   value_length_bytes: (vr) ->
     if @is_explicit() then vr.explicit_value_length_bytes else vr.implicit_value_length_bytes

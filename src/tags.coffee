@@ -11,6 +11,7 @@ printf = require("printf")
 ##
 class Element
   constructor: (@tag, @name, @vr, @vm, @mask, @retired) ->
+    @tag_str = printf "%08X", @tag
     if not @vr
       @vr = if @_is_private_creator() then 'LO' else 'UN'
 

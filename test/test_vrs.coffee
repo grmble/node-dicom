@@ -27,7 +27,7 @@ exports.BigEndianTest =
     test.deepEqual b_deadbeef, vrs.BIG_ENDIAN.pack_uint16s([0xDEAD, 0xBEEF])
     test.done()
 
-DEF_CTX = new vrs.Context()
+DEF_CTX = new vrs.Context({}, {})
 
 exports.ATTest =
   "test encoding": (test) ->

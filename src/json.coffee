@@ -8,10 +8,15 @@
 #
 ##
 
+fs = require("fs")
 stream = require("stream")
+zlib = require("zlib")
+
 printf = require("printf")
 ConcatStream = require("concat-stream")
 
+tags = require("../lib/tags")
+decoder = require("../lib/decoder")
 log = require("./logger")("json")
 
 ##
@@ -38,7 +43,8 @@ class JsonEncoder extends stream.Transform
 
   _transform: (event, encoding, cb) ->
     try
-      log.trace event.log_summary(), "Json:_transform received dicom event"
+      log.debug({command: event.command, element: event.element?.name, depth: @depth},
+        "Json:_transform received dicom event") if log.debug()
       command = event.command
       switch command
         when 'element' then @handle_element(event)
@@ -49,7 +55,7 @@ class JsonEncoder extends stream.Transform
         when 'start_element' then @start_element(event)
         when 'end_element' then @end_element(event)
         else
-          log.trace {command: command}, "_transform: ignoring"
+          log.trace({command: command}, "_transform: ignoring") if log.trace()
       cb(null)
     catch err
       log.error err
@@ -128,15 +134,76 @@ class JsonSink extends ConcatStream
 exports.JsonEncoder = JsonEncoder
 exports.JsonSink = JsonSink
 
-if require.main is module
-  log.debug "JSONifying #{process.argv[2]}"
-  decoder = require("./decoder") {guess_header: true}
-  encoder = new JsonEncoder()
-  sink = new JsonSink (err, json) ->
-    console.log("Error:", err, "JSON:", json)
-  require("fs").createReadStream(process.argv[2]).pipe decoder
-  decoder.pipe encoder
-  # encoder.pipe sink
-  encoder.pipe process.stdout
+# helper functions
+# path elements may be anything that can be
+# tags.for_tag-ed except NUBMERS - they
+# represent sequence item access
+get_element = (json, path...) ->
+  lookup = []
+  must_pop = false
+  for p in path
+    if (typeof p) == 'number'
+      lookup.push p
+      must_pop = false
+    else
+      lookup.push tags.for_tag(p).tag_str
+      lookup.push "Value"
+      must_pop = true
+  if must_pop
+    lookup.pop()
+  result = json
+  for x in lookup
+    result = result[x]
+  return result
 
+get_values = (json, path...) ->
+  return get_element(json, path...).Value
+
+get_value = (json, path...) ->
+  return get_values(json, path...)?[0]
+
+get_vr = (json, path...) ->
+  return get_element(json, path...)?.vr
+
+file2jsonstream = (fn) ->
+  fs.createReadStream fn
+  .pipe decoder {guess_header: true}
+  .pipe new JsonEncoder()
+
+file2json = (fn, cb) ->
+  file2jsonstream(fn)
+  .pipe new JsonSink(cb)
+
+gunzip2jsonstream = (fn) ->
+  fs.createReadStream fn
+  .pipe zlib.createGunzip()
+  .pipe decoder {guess_header: true}
+  .pipe new JsonEncoder()
+
+gunzip2json = (fn, cb) ->
+  gunzip2jsonstream(fn)
+  .pipe new JsonSink(cb)
+
+exports.get_element = get_element
+exports.get_values = get_values
+exports.get_value = get_value
+exports.get_vr = get_vr
+exports.file2jsonstream = file2jsonstream
+exports.gunzip2jsonstream = gunzip2jsonstream
+exports.file2json = file2json
+exports.gunzip2json = gunzip2json
+
+
+if require.main is module
+  compressed = false
+  if process.argv[2] == "-z"
+    compressed = true
+    filename = process.argv[3]
+  else
+    filename = process.argv[2]
+  if compressed
+    input = exports.gunzip2jsonstream(filename)
+  else
+    input =exports.file2jsonstream(filename)
+  input.pipe process.stdout
 

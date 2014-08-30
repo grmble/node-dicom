@@ -2,47 +2,45 @@
 #
 # test the dicom decode / json pipeline
 fs = require "fs"
+zlib = require "zlib"
+
 tags = require "../lib/tags"
 decoder = require "../lib/decoder"
 json = require "../lib/json"
 
-file2json = (fn, cb) ->
-  fs.createReadStream fn
-  .pipe decoder {guess_header: true}
-  .pipe new json.JsonEncoder()
-  .pipe new json.JsonSink(cb)
-
-get_value = (json, el) ->
-  return json[el.mask]?.Value?[0]
-get_values = (json, el) ->
-  return json[el.mask]?.Value
-get_vr = (json, el) ->
-  return json[el.mask]?.vr
-
 exports.Dicom2JsonTest =
+  "test defined length sequence": (test) ->
+    test.expect 2
+    json.gunzip2json "test/deflate_tests/report.gz", (err, data) ->
+      if err
+        console.error "Error:", err
+      test.equal 1111, json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeValue)
+      test.equal "Consultation Report", json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeMeaning)
+      test.done()
+
   "test patient blob": (test) ->
     test.expect 2
-    file2json "test/patient.blob", (err, json) ->
+    json.file2json "test/patient.blob", (err, data) ->
       if err
-        console.error err
-      test.equal "Agostini^Giacomo", get_value(json, tags.PatientName)
-      test.equal "19870523", get_value(json, tags.PatientBirthDate)
+        console.error "Error:", err
+      test.equal "Agostini^Giacomo", json.get_value(data, tags.PatientName)
+      test.equal "19870523", json.get_value(data, tags.PatientBirthDate)
       test.done()
 
   "test study blob": (test) ->
     test.expect 2
-    file2json "test/study.blob", (err, json) ->
+    json.file2json "test/study.blob", (err, data) ->
       if err
-        console.error err
-      test.equal "1.2.40.1.12.13589053", get_value(json, tags.StudyInstanceUID)
-      test.equal "13589053", get_value(json, tags.AccessionNumber)
+        console.error "Error:", err
+      test.equal "1.2.40.1.12.13589053", json.get_value(data, tags.StudyInstanceUID)
+      test.equal "13589053", json.get_value(data, tags.AccessionNumber)
       test.done()
 
   "test series blob": (test) ->
     test.expect 2
-    file2json "test/series.blob", (err, json) ->
+    json.file2json "test/series.blob", (err, data) ->
       if err
-        console.error err
-      test.equal "1.3.12.2.1107.5.1.4.43511.30000005090506061531200001783", get_value(json, tags.SeriesInstanceUID)
-      test.equal 1, get_values(json, tags.ReferencedPerformedProcedureStepSequence).length
+        console.error "Error:", err
+      test.equal "1.3.12.2.1107.5.1.4.43511.30000005090506061531200001783", json.get_value(data, tags.SeriesInstanceUID)
+      test.equal 1, json.get_values(data, tags.ReferencedPerformedProcedureStepSequence).length
       test.done()
