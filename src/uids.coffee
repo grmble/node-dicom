@@ -21,7 +21,7 @@ class TransferSyntax extends UID
     if @name == 'ExplicitVRBigEndian' then vrs.BIG_ENDIAN else vrs.LITTLE_ENDIAN
 
   is_explicit: () ->
-    'Implicit' not in @name
+    not /^Implicit/.test(@name)
 
   make_context: () ->
     obj =
@@ -58,6 +58,7 @@ find = (regex) ->
   for uid, uidObj of _UID_DICT
     if regex.test(uid) or regex.test(uidObj.name)
       console.log uidObj
+  undefined
 
 exports.for_uid = for_uid
 exports.find = find

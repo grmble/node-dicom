@@ -221,15 +221,14 @@ class ContextStack
     log.trace({context: @log_summary()}, "pushed context, this is current now!") if log.trace()
 
   ##
-  # replace the current dicom context
+  # replace the root dicom context
   #
-  # only allowed at stack_depth = 1
   #
   ##
   replace: (obj) ->
-    if @_stack.length > 1
-      throw new DicomError("ContextStack:replace not allowed unless stack depth = 1: #{@stack.length}")
-    context = new Context(@top(), obj)
+    # if @_stack.length > 1
+    #  throw new DicomError("ContextStack:replace not allowed unless stack depth = 1: #{@_stack.length}")
+    context = new Context(@_stack[0].context, obj)
     @_stack[0].context = context
     log.trace({context: @log_summary()}, "replaced root context") if log.trace()
 

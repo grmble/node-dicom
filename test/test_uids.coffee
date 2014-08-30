@@ -10,7 +10,7 @@ exports.TagsTest =
     test.equal uids.ImplicitVRLittleEndian.uid, dts.uid
     test.equal 'ImplicitVRLittleEndian', dts.name
     test.deepEqual vrs.LITTLE_ENDIAN, dts.endianess()
-    test.equal true, dts.is_explicit()
+    test.equal false, dts.is_explicit()
     test.done()
 
   "test for_uid": (test) ->

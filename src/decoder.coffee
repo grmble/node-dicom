@@ -24,7 +24,7 @@ log = require("./logger")('decoder')
 # * streaming_value_length_minimum: minimum value length, longer values will be
 #   streamed
 # * read_header: read preamble / dicom header, defaults to false.
-#   Also implies reading metadata.
+#   Also implies reading metainfo.
 # * transfer_syntax: transfer syntax, defaults to ExplicitVRLittleEndian
 # * guess_header: will try to guess if preamble/dicom header are present
 ##
@@ -82,9 +82,47 @@ class Decoder extends stream.Transform
     log.debug {state: state}, "switching state: #{msg} ==> #{state}"
     @state = state
 
+  _decode_metainfo: () =>
+    if not @metainfo_length
+      @saved = @buffer.copy()
+      start_pos = @buffer.stream_position
+      @metainfo_done = false
+
+      metainfo_cb = () =>
+        log.debug "metainfo callback, setting metainfo_done"
+        @metainfo_done = true
+        @_switch_state @_decode_dataset, "metainfo done, decoding dataset"
+        if @metainfo_listener
+          log.debug "asdf"
+          @removeListener 'data', @metainfo_listener
+          @metainfo_listener = undefined
+          log.debug "jkl"
+        log.debug "ts=#{@metainfo_ts}"
+        ts = uids.for_uid(@metainfo_ts)
+        log.debug {ts: ts}, "_decode_metainfo: switching transfer syntax"
+        @context.replace(ts.make_context())
+
+      @metainfo_listener = (event) =>
+        if event.element.tag == 0x00020010
+          @metainfo_ts = event.vr.value()
+          log.debug {ts: @metainfo_ts}, "metainfo transfer syntax found"
+        else if event.element.tag == 0x00020000
+          @metainfo_length = event.vr.value()
+          log.debug {length: @metainfo_length}, "metainfo length found"
+          @context.push({}, start_pos + @metainfo_length, metainfo_cb)
+      @on 'data', @metainfo_listener
+
+    while not @metainfo_done
+      @_decode_dataelement()
+    log.debug("breaking out of metainfo loop")
+
+    @_decode_dataset()
+
   _decode_dataset: () =>
     while true
       @_decode_dataelement()
+    return undefined
+
 
   _decode_dataelement: () =>
     @saved = @buffer.copy()
@@ -148,12 +186,13 @@ class Decoder extends stream.Transform
     throw new vrs.DicomError("Unable to guess DICOM encoding")
     
   _decode_datafile: () =>
+    @_switch_state @_decode_datafile, "decoding preamble/header"
     @saved = @buffer.copy()
     header = @buffer.consume(132)
     if header.toString("binary", 128, 132) != 'DICM'
       throw new vrs.DicomError("No DICOM header found")
-    # @_decode_metainfo()
-    @_decode_dataset()
+    @_switch_state @_decode_metainfo, "header decoded, decoding metainfo now"
+    @_decode_metainfo()
 
   _consume_std_value_length: () =>
     length_element = new vrs.UL(@context.top())

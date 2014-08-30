@@ -88,6 +88,7 @@ find = (regex) ->
   for tag_str, el of _TAG_DICT
     if regex.test(tag_str) or regex.test(el.name)
       console.log el
+  undefined
 
 exports.find = find
 exports.for_tag = for_tag
