@@ -153,11 +153,11 @@ get_element = (json, path...) ->
     lookup.pop()
   result = json
   for x in lookup
-    result = result[x]
+    result = result?[x]
   return result
 
 get_values = (json, path...) ->
-  return get_element(json, path...).Value
+  return get_element(json, path...)?.Value
 
 get_value = (json, path...) ->
   return get_values(json, path...)?[0]
