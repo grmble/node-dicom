@@ -10,6 +10,11 @@ DICOM JSON Model from this.
 Examples:
 ---------
 
+The examples given here will not work if
+you installed via npm.  The README for 
+the last npm release is at
+https://github.com/grmble/node-dicom/tree/e145f6c4b6e31e19d73e20777bda8c656996a4b2
+
 Read a DICOM file, produce JSON Model, and print some data:
 
 
