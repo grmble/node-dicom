@@ -3,6 +3,7 @@
 (A) Test reading big endian data. +Testing
 (A) Test undefined length UN +Testing
 (B) Bug: partial dataelement at end of file should be an error
+(B) Documentation (ronn?)
 (B) Implement Encoder +Encoder
 (B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
 (C) PN component groups +Decoder
