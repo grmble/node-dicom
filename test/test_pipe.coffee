@@ -41,7 +41,7 @@ exports.Dicom2JsonTest =
     json.file2json "test/patient.blob", (err, data) ->
       if err
         console.log "Error:", err.stack
-      test.equal "Agostini^Giacomo", json.get_value(data, tags.PatientName)
+      test.deepEqual {Alphabetic: "Agostini^Giacomo"}, json.get_value(data, tags.PatientName)
       test.equal "19870523", json.get_value(data, tags.PatientBirthDate)
       test.done()
 

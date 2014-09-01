@@ -159,3 +159,44 @@ exports.OBTest =
     ob = new vrs.OB(DEF_CTX, new Buffer("asdf"))
     test.deepEqual ["YXNkZg=="], ob.values()
     test.done()
+
+exports.PNTest =
+  "test single component group value": (test) ->
+    test.expect 1
+    pn = new vrs.PN(DEF_CTX, new Buffer("group1"))
+    test.deepEqual [{Alphabetic: "group1"}], pn.values()
+    test.done()
+  "test all component groups values": (test) ->
+    test.expect 1
+    pn = new vrs.PN(DEF_CTX, new Buffer("group1=group2=group3=x=y"))
+    test.deepEqual [{Alphabetic: "group1", Ideographic: "group2", Phonetic: "group3"}], pn.values()
+    test.done()
+  "test encode alphabetic": (test) ->
+    test.expect 1
+    pn = new vrs.PN(DEF_CTX, null, [{Alphabetic: "group1"}])
+    test.deepEqual new Buffer("group1"), pn.buffer
+    test.done()
+  "test encode all groups": (test) ->
+    test.expect 1
+    pn = new vrs.PN(DEF_CTX, null, [{Alphabetic: "group1", Ideographic: "group2", Phonetic: "group3", Xtra1: "x", Xtra2: "y"}])
+    test.deepEqual new Buffer("group1=group2=group3"), pn.buffer
+    test.done()
+
+#
+# IS and DS are encoded as strings, but represent numbers.
+# They are numbers in the DICOM model.
+#
+exports.ISTest =
+  "test values": (test) ->
+    test.expect 3
+    _is = new vrs.IS(DEF_CTX, new Buffer("1\\2"))
+    _vals = _is.values()
+    test.deepEqual [1,2], _vals
+    test.equal 'number', typeof _vals[0]
+    test.equal 'number', typeof _vals[1]
+    test.done()
+  "test encode": (test) ->
+    test.expect 1
+    _is = new vrs.IS(DEF_CTX, null, [1,2])
+    test.deepEqual new Buffer("1\\2 "), _is.buffer
+    test.done()

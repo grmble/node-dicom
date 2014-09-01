@@ -5,8 +5,8 @@
 (B) Documentation (ronn?)
 (B) Implement Encoder +Encoder
 (B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
-(C) PN component groups +Decoder
 (C) Tag dictionary "OB or OW" / ImplicitVR OW +Decoder
+(C) Use grunt instead of cake
 (D) Implement Dataset +Dataset
 (D) undefined instead of 'undefined' for undefined VR elements +Decoder
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
@@ -21,7 +21,9 @@ x (A) Parsing of encapsulated PixelData
 x (A) Test defined length SQ +Testing
 x (A) Test parsing ImplicitVR
 x (A) Work from master
+x (B) DS/IS should be numbers in Json Model
 x (B) Encapsulated content streaming.
 x (B) UN items with undefined length.
+x (C) PN component groups +Decoder
 x (C) Transfer syntax switch / metadata parsing +Decoder
 x (E) min_streaming_element_size parameter for decoder

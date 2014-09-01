@@ -266,7 +266,20 @@ class ContextStack
       encapsulated: context.encapsulated
       stack_depth: @_stack.length
 
-
+##
+#
+# DICOM / iconv character sets:
+#
+# Default: ISO-IR 6 - Default - ASCII (binary)
+# Single value but not ISO_IR 192 or GB18030:
+#   one of the ISO-8859 8 bit character sets, no extensions
+# multi value but not ISO_IR 192 or GB18030:
+#   one of the ISO-8859 8 bit character sets, character extensions
+# ISO-IR 192 or GB18030:
+#   multi-value character sets, no extension, 0008,0005 must
+#   be single valued
+#
+##
 
 ##
 # 
@@ -597,6 +610,12 @@ class Stringish extends VR
       b = b.slice(0, -1)
     @buffer = b
 
+# string encoding, number values
+class NumberString extends Stringish
+  values: () ->
+    super().map Number
+
+
 ##
 #
 # Dicom AE (= Application Entity).
@@ -644,7 +663,7 @@ class DA extends Stringish
 # Note: we leave this as a String.
 #
 ##
-class DS extends Stringish
+class DS extends NumberString
 
 ##
 #
@@ -660,7 +679,7 @@ class DT extends Stringish
 # Dicom IS (= Integer String)
 #
 ##
-class IS extends Stringish
+class IS extends NumberString
 
 ##
 #
@@ -684,11 +703,36 @@ class LT extends Stringish
 #
 # Dicom PN (= Person Name).
 #
-# TODO: handling of component groups.
-#
 # Limited to 64 characters per component group (not enforced)
 ##
 class PN extends Stringish
+  values: () ->
+    _values = super()
+    for v in _values
+      _groups = v?.split("=")
+      obj = {}
+      if _groups[0]?
+        obj.Alphabetic = _groups[0]
+      if _groups[1]?
+        obj.Ideographic = _groups[1]
+      if _groups[2]?
+        obj.Phonetic = _groups[2]
+      obj
+
+  encode: (values) ->
+    str_values = for v in values
+      if (typeof v) == 'object'
+        groups = []
+        if v.Alphabetic?
+          groups[0] = v.Alphabetic
+        if v.Ideographic?
+          groups[1] = v.Ideographic
+        if v.Phonetic?
+          groups[2] = v.Phonetic
+        groups.join("=")
+      else
+        v
+    super(str_values)
 
 ##
 #
