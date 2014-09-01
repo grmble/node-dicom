@@ -3,6 +3,7 @@
 #
 
 log = require("./logger")("vrs")
+iconv = require("iconv-lite")
 
 UNDEFINED_LENGTH = 0xFFFFFFFF
 
@@ -185,7 +186,7 @@ class Context
   ##
   constructor: (ctx, obj) ->
     @endianess = obj.endianess ? ctx?.endianess ? LITTLE_ENDIAN
-    @charset = obj.charset ? ctx?.charset ? "binary"
+    @charset = obj.charset ? ctx?.charset ? "latin1"
     @explicit = obj.explicit ? ctx?.explicit ? true
     @encapsulated = obj.encapsulated ? ctx?.encapsulated ? false
 
@@ -225,12 +226,19 @@ class ContextStack
   #
   #
   ##
-  replace: (obj) ->
+  replace_root: (obj) ->
     # if @_stack.length > 1
     #  throw new DicomError("ContextStack:replace not allowed unless stack depth = 1: #{@_stack.length}")
     context = new Context(@_stack[0].context, obj)
     @_stack[0].context = context
     log.trace({context: @log_summary()}, "replaced root context") if log.trace()
+
+  # replace top context
+  replace_top: (obj) ->
+    csobj = @_stack[@_stack.length - 1]
+    context = new Context(csobj.context, obj)
+    csobj.context = context
+    log.trace({context: @log_summary()}, "replaced top context") if log.trace()
 
   pop: () ->
     csobj = @_stack.pop()
@@ -279,7 +287,42 @@ class ContextStack
 #   multi-value character sets, no extension, 0008,0005 must
 #   be single valued
 #
+# List of isoir* encodings for iconv-lite:
+# dbcs-data.js:    'isoir58': 'gbk',
+# dbcs-data.js:    'isoir149': 'cp949',
+# sbcs-data.js:    "isoir6": "ascii",
+# sbcs-data.js:    "isoir14": "iso646jp",
+# sbcs-data.js:    "isoir57": "iso646cn",
+# sbcs-data.js:    "isoir100": "iso88591",
+# sbcs-data.js:    "isoir101": "iso88592",
+# sbcs-data.js:    "isoir109": "iso88593",
+# sbcs-data.js:    "isoir110": "iso88594",
+# sbcs-data.js:    "isoir144": "iso88595",
+# sbcs-data.js:    "isoir127": "iso88596",
+# sbcs-data.js:    "isoir126": "iso88597",
+# sbcs-data.js:    "isoir138": "iso88598",
+# sbcs-data.js:    "isoir148": "iso88599",
+# sbcs-data.js:    "isoir157": "iso885910",
+# sbcs-data.js:    "isoir166": "tis620",
+# sbcs-data.js:    "isoir179": "iso885913",
+# sbcs-data.js:    "isoir199": "iso885914",
+# sbcs-data.js:    "isoir203": "iso885915",
+# sbcs-data.js:    "isoir226": "iso885916",
+#
 ##
+
+_iconv_charset = (spec_cs) ->
+  switch spec_cs
+    when 'GB18030' then 'gb18030'
+    when 'ISO_IR 192' then 'utf8'
+    else
+      if not spec_cs
+        return "latin1"
+      _match = spec_cs.match(/^ISO_IR (\d+)/)
+      if _match
+        return 'isoir' + _match[1]
+      # iconv-lite does not seem to have the ISO 2022 encodings ... :-(
+      return spec_cs
 
 ##
 # 
@@ -596,7 +639,9 @@ class Stringish extends VR
   split_str: '\\'
 
   values: () ->
-    s = @buffer.toString(@context.charset)
+    if not @buffer?
+      return undefined
+    s = iconv.decode(@buffer, @context.charset)
     if _ends_with s, @padding_character
       s = s.slice(0, -1)
     if @allow_multiple_values
@@ -605,7 +650,7 @@ class Stringish extends VR
 
   encode: (values) ->
     s = values.join(@split_str) + @padding_character
-    b = new Buffer(s, @context.charset)
+    b = iconv.encode(s, @context.charset)
     if b.length % 2
       b = b.slice(0, -1)
     @buffer = b
@@ -642,6 +687,14 @@ class AS extends Stringish
 # allowed. Leading an trailing spaces are non-significant.
 ##
 class CS extends Stringish
+  _consume_and_emit_known_value_length: (element, readbuffer, decoder, start_position, value_length) ->
+    super(element, readbuffer, decoder, start_position, value_length)
+    if element.tag == 0x00080005
+      # specific character set
+      spec_cs = @value()
+      log.debug {charset: spec_cs}, "CS: detected 0008,0005 SpecificCharacterSet"
+      iconv_cs = _iconv_charset(spec_cs)
+      decoder.context.replace_top({charset: iconv_cs})
 
 ##
 #

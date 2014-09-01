@@ -4,10 +4,10 @@
 (B) Bug: partial dataelement at end of file should be an error
 (B) Documentation (ronn?)
 (B) Implement Encoder +Encoder
-(B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
 (C) Tag dictionary "OB or OW" / ImplicitVR OW +Decoder
 (C) Use grunt instead of cake
 (D) Implement Dataset +Dataset
+(D) Support multi-valued 0008,0005 + charset extension
 (D) undefined instead of 'undefined' for undefined VR elements +Decoder
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
 x (A) ByteStreamer object - resuming with correct byte count
@@ -23,6 +23,7 @@ x (A) Test parsing ImplicitVR
 x (A) Work from master
 x (B) DS/IS should be numbers in Json Model
 x (B) Encapsulated content streaming.
+x (B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
 x (B) UN items with undefined length.
 x (C) PN component groups +Decoder
 x (C) Transfer syntax switch / metadata parsing +Decoder

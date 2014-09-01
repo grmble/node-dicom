@@ -100,7 +100,7 @@ class Decoder extends stream.Transform
         log.debug "ts=#{@metainfo_ts}"
         ts = uids.for_uid(@metainfo_ts)
         log.debug {ts: ts}, "_decode_metainfo: switching transfer syntax"
-        @context.replace(ts.make_context())
+        @context.replace_root(ts.make_context())
 
       @metainfo_listener = (event) =>
         if event.element.tag == 0x00020010
@@ -180,7 +180,7 @@ class Decoder extends stream.Transform
     if header.length >= 4 and header.slice(0, 4).equals(new Buffer([0x08, 0x00, 0x05, 0x00]))
       log.debug "_guess_header: start with specific character set, ImplicitVRLittleEndian"
       ts = uids.for_uid('ImplicitVRLittleEndian')
-      @context.replace(ts.make_context())
+      @context.replace_root(ts.make_context())
       @buffer = @saved
       return @_decode_dataset()
     throw new vrs.DicomError("Unable to guess DICOM encoding")

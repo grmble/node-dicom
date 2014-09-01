@@ -36,6 +36,32 @@ exports.Dicom2JsonTest =
       test.equal "Consultation Report", json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeMeaning)
       test.done()
 
+  "test greek charset (isoir126)": (test) ->
+    test.expect 1
+    json.gunzip2json "test/charsettests/SCSGREEK.gz", (err, data) ->
+      if err
+        console.log "Error:", err.stack
+      test.equal "Διονυσιος", json.get_value(data, tags.PatientName).Alphabetic
+      test.done()
+
+  "test utf8 charset": (test) ->
+    test.expect 2
+    json.gunzip2json "test/charsettests/SCSX1.gz", (err, data) ->
+      if err
+        console.log "Error:", err.stack
+      test.equal "Wang^XiaoDong", json.get_value(data, tags.PatientName).Alphabetic
+      test.equal "王^小東", json.get_value(data, tags.PatientName).Ideographic
+      test.done()
+
+  "test gb18030 charset": (test) ->
+    test.expect 2
+    json.gunzip2json "test/charsettests/SCSX2.gz", (err, data) ->
+      if err
+        console.log "Error:", err.stack
+      test.equal "Wang^XiaoDong", json.get_value(data, tags.PatientName).Alphabetic
+      test.equal "王^小东", json.get_value(data, tags.PatientName).Ideographic
+      test.done()
+
   "test patient blob": (test) ->
     test.expect 2
     json.file2json "test/patient.blob", (err, data) ->
