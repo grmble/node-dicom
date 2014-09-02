@@ -62,7 +62,7 @@ class JsonEncoder extends stream.Transform
       cb(err)
 
   _flush: (cb) ->
-    @push "}"
+    @push "}\n"
     cb(null)
 
 

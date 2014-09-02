@@ -62,29 +62,11 @@ exports.Dicom2JsonTest =
       test.equal "王^小东", json.get_value(data, tags.PatientName).Ideographic
       test.done()
 
-  "test patient blob": (test) ->
-    test.expect 2
-    json.file2json "test/patient.blob", (err, data) ->
+  "test quotes in json": (test) ->
+    test.expect 1
+    json.gunzip2json "test/quotes_jpls.dcm.gz", (err, data) ->
       if err
         console.log "Error:", err.stack
-      test.deepEqual {Alphabetic: "Agostini^Giacomo"}, json.get_value(data, tags.PatientName)
-      test.equal "19870523", json.get_value(data, tags.PatientBirthDate)
+      test.deepEqual {Alphabetic: "\"D'Artagnan\"^asdf"}, json.get_value(data, tags.PatientName)
       test.done()
 
-  "test study blob": (test) ->
-    test.expect 2
-    json.file2json "test/study.blob", (err, data) ->
-      if err
-        console.log "Error:", err.stack
-      test.equal "1.2.40.1.12.13589053", json.get_value(data, tags.StudyInstanceUID)
-      test.equal "13589053", json.get_value(data, tags.AccessionNumber)
-      test.done()
-
-  "test series blob": (test) ->
-    test.expect 2
-    json.file2json "test/series.blob", (err, data) ->
-      if err
-        console.log "Error:", err.stack
-      test.equal "1.3.12.2.1107.5.1.4.43511.30000005090506061531200001783", json.get_value(data, tags.SeriesInstanceUID)
-      test.equal 1, json.get_values(data, tags.ReferencedPerformedProcedureStepSequence).length
-      test.done()

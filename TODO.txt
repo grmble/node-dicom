@@ -1,4 +1,5 @@
-(A) Test encapsulated OB +Testing
+(A) Emit Base64 InlineBinary, not Value +JSON
+(A) Emit BulkDataURI +JSON
 (A) Test reading big endian data. +Testing
 (A) Test undefined length UN +Testing
 (B) Bug: partial dataelement at end of file should be an error
@@ -18,7 +19,9 @@ x (A) Finish porting read behaviour from vrs.py
 x (A) Flush/check for remaining stack.
 x (A) Implement json model, http://medical.nema.org/dicom/2013/output/chtml/part18/sect_F.2.html
 x (A) Parsing of encapsulated PixelData
+x (A) Test Json with single/double quotes +Testing
 x (A) Test defined length SQ +Testing
+x (A) Test encapsulated OB +Testing
 x (A) Test parsing ImplicitVR
 x (A) Work from master
 x (B) DS/IS should be numbers in Json Model
