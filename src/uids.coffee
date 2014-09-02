@@ -18,7 +18,7 @@ class UID
 class TransferSyntax extends UID
   endianess: () ->
     # only ExplicitVRBigEndian is big endian
-    if @name == 'ExplicitVRBigEndian' then vrs.BIG_ENDIAN else vrs.LITTLE_ENDIAN
+    if /^ExplicitVRBigEndian/.test(@name) then vrs.BIG_ENDIAN else vrs.LITTLE_ENDIAN
 
   is_explicit: () ->
     not /^Implicit/.test(@name)

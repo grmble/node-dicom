@@ -1,9 +1,7 @@
-(A) Emit Base64 InlineBinary, not Value +JSON
-(A) Emit BulkDataURI +JSON
-(A) Test reading big endian data. +Testing
 (A) Test undefined length UN +Testing
 (B) Bug: partial dataelement at end of file should be an error
-(B) Documentation (ronn?)
+(B) Documentation (ronn?), installation +Docs
+(B) Emit BulkDataURI +JSON
 (B) Implement Encoder +Encoder
 (C) Tag dictionary "OB or OW" / ImplicitVR OW +Decoder
 (C) Use grunt instead of cake
@@ -14,6 +12,7 @@ Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
 x (A) ByteStreamer object - resuming with correct byte count
 x (A) Content streaming.
 x (A) Datafile parsing
+x (A) Emit Base64 InlineBinary, not Value +JSON
 x (A) External Bunyan Configuration
 x (A) Finish porting read behaviour from vrs.py
 x (A) Flush/check for remaining stack.
@@ -23,9 +22,11 @@ x (A) Test Json with single/double quotes +Testing
 x (A) Test defined length SQ +Testing
 x (A) Test encapsulated OB +Testing
 x (A) Test parsing ImplicitVR
+x (A) Test reading big endian data. +Testing
 x (A) Work from master
 x (B) DS/IS should be numbers in Json Model
 x (B) Encapsulated content streaming.
+x (B) Group Lengths are UL
 x (B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
 x (B) UN items with undefined length.
 x (C) PN component groups +Decoder

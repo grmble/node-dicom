@@ -70,9 +70,11 @@ class JsonEncoder extends stream.Transform
     return if @ignore
     key = printf '"%08X"', event.element.tag
     key = printf "%*s", key, key.length + @depth
-    obj =
-      vr: event.element.vr,
-      Value: event.vr.values()
+    obj = {vr: event.element.vr}
+    if event.vr.base64_values
+      obj.InlineBinary = event.vr.values()
+    else
+      obj.Value = event.vr.values()
     start = ',\n'
     if @fresh
       start = '{\n'

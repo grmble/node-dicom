@@ -13,7 +13,12 @@ class Element
   constructor: (@tag, @name, @vr, @vm, @mask, @retired) ->
     @tag_str = printf "%08X", @tag
     if not @vr
-      @vr = if @_is_private_creator() then 'LO' else 'UN'
+      if @_is_private_creator()
+        @vr = 'LO'
+      else if @_is_group_length()
+        @vr = 'UL'
+      else
+        @vr = 'UN'
 
   _is_private_creator: () ->
     group = @tag >> 16
@@ -23,6 +28,10 @@ class Element
   _is_private_tag: () ->
     group = @tag >> 16
     (group & 1) and (group > 8)
+
+  _is_group_length: () ->
+    elem = @tag & 0xFFFF
+    return elem == 0
 
   log_summary: () ->
     summary =

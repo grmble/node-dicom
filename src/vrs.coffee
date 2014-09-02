@@ -364,6 +364,8 @@ class VR
 
   explicit_value_length_bytes: 2
   implicit_value_length_bytes: 4
+  
+  base64_values: false
 
   # Initialize the VR. Either a buffer or parsed values must be given
   constructor: (context, buffer, values) ->
@@ -541,7 +543,9 @@ class US extends FixedLength
 
 # base class for the 'other' VRs ... OB, OW, OF, UN
 class OtherVR extends FixedLength
+  base64_values: true
   explicit_value_length_bytes: 6
+
   values: () ->
     [@buffer.toString('base64')]
 

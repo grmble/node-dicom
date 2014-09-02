@@ -70,3 +70,25 @@ exports.Dicom2JsonTest =
       test.deepEqual {Alphabetic: "\"D'Artagnan\"^asdf"}, json.get_value(data, tags.PatientName)
       test.done()
 
+  "test inlinebinary ob": (test) ->
+    test.expect 2
+    json.gunzip2json "test/deflate_tests/report.gz", (err, data) ->
+      if err
+        console.log "Error:", err.stack
+      elem = json.get_element(data, tags.FileMetaInformationVersion)
+      test.ok not elem.Value?
+      test.ok elem.InlineBinary
+      test.done()
+
+
+  "test decoding big endian": (test) ->
+    test.expect 2
+    json.gunzip2json "test/scsarab_be.gz", (err, data) ->
+      if err
+        console.log "Error:", err.stack
+      test.equal 512, json.get_value(data, tags.Rows)
+      test.equal 512, json.get_value(data, tags.Columns)
+      test.done()
+
+
+

@@ -31,6 +31,12 @@ exports.TagsTest =
     test.equal 'UN', el.vr
     test.done()
 
+  "test group length tag": (test) ->
+    test.expect 1
+    el = tags.for_tag(0x00090000)
+    test.equal 'UL', el.vr
+    test.done()
+
   "test masked": (test) ->
     test.expect 4
     el = tags.for_tag(0x60120010)
@@ -48,15 +54,3 @@ exports.TagsTest =
      el = tags.for_tag(0x10002220)
      test.equal 'UN', el.vr
      test.done()
-
-###
-class TagTest(unittest.TestCase):
-    
-    def test_masked_unsupported(self):
-        # we only support overlays/curves not the other even older repeating elements
-        el = gjdcm.tags.for_tag(0x10002220)
-        self.assertEqual(el.vr, 'UN')
-
-if __name__ == '__main__':
-    unittest.main()
-###
