@@ -1,11 +1,30 @@
-Node.js DICOM Decoding
-======================
+Node.js DICOM
+=============
 
-Data dictionary according to the 2014 standard.
+The package provides the following:
 
-Currently, there is a Decoder that turns a DICOM stream
-into Dicom Events.  A JsonEncoder can produce a
-DICOM JSON Model from this.
+* Data dictionary according to the 2014a standard.
+* Streaming DICOM Decoder that reads a DICOM stream end
+  emits DicomEvent instances.
+* Streaming JSON Encoder that turns a DicomEvent stream
+  into a DICOM JSON Model
+* JSON Sink that consumes the JSON Model stream and
+  produces an in-memory JSON Object.
+
+Limitations:
+------------
+
+* ISO 2022 character sets are not in iconv-lite,
+  this means the decoder does not currently
+  support ISO 2022 encodings,
+  multi-valued (0008,0005) Specific Character Set
+  and DICOM characterset extensions.
+* Dicom Elements with a value length above a
+  configurable threshold are not constructed
+  in-memory, but emitted as `start_element`,
+  a sequence of raw events with the encoded value
+  and an `end_element` event.  The JSON Encoder 
+  currently ignores these bulkdata stream parts.
 
 Examples:
 ---------
