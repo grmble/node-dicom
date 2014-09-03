@@ -91,4 +91,19 @@ exports.Dicom2JsonTest =
       test.done()
 
 
+  "test decoding implicit vr with undefined length private sequence": (test) ->
+    test.expect 4
+    json.gunzip2json "test/private_report.gz", (err, data) ->
+      if err
+        console.log "Error:", err.stack
+      elem = tags.for_tag(0x0041A730)
+      test.equal 'UN', elem.vr
+      priv_cont_sq = json.get_element(data, elem)
+      # console.log "priv_cont_sq", priv_cont_sq
+      test.ok priv_cont_sq
+      test.equal 'SQ', priv_cont_sq.vr
+      test.equal 5, priv_cont_sq.Value.length
+      test.done()
+
+
 
