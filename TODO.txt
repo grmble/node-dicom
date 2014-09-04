@@ -1,4 +1,3 @@
-(B) Bug: partial dataelement at end of file should be an error
 (B) Documentation (ronn?), installation +Docs
 (B) Emit BulkDataURI +JSON
 (B) Implement Encoder +Encoder
@@ -24,6 +23,7 @@ x (A) Test parsing ImplicitVR
 x (A) Test reading big endian data. +Testing
 x (A) Test undefined length UN +Testing
 x (A) Work from master
+x (B) Bug: partial dataelement at end of file should be an error
 x (B) DS/IS should be numbers in Json Model
 x (B) Encapsulated content streaming.
 x (B) Group Lengths are UL

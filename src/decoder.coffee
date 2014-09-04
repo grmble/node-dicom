@@ -68,11 +68,11 @@ class Decoder extends stream.Transform
 
   _flush: (cb) ->
     @_action_wrapper(@state)
-    if @buffer.length == 0 and @context.stack_depth() == 1
+    if @buffer.length == 0 and @context.stack_depth() == 1 and @saved.stream_position == @buffer.stream_position
       log.debug "_flush successful, all is well with our decode"
       cb()
     else
-      log.debug({buffer: @buffer.length, context: @context.stack_depth()},
+      log.debug({buffer: @buffer.length, context: @context.stack_depth(), saved: @saved.stream_position, position: @buffer.stream_position},
         "_flush: can not flush (length should be 0, stack depth 1)")
       @emit('error',  new vrs.UnexpectedEofOfFile())
 
