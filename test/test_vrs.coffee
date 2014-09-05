@@ -160,6 +160,16 @@ exports.OBTest =
     test.deepEqual ["YXNkZg=="], ob.values()
     test.done()
 
+#
+# binary vrs should produce base64 encoded values ...
+#
+exports.ODTest =
+  "test base64 values": (test) ->
+    test.expect 1
+    od = new vrs.OD(DEF_CTX, new Buffer("asdfasdf"))
+    test.deepEqual ["YXNkZmFzZGY="], od.values()
+    test.done()
+
 exports.PNTest =
   "test single component group value": (test) ->
     test.expect 1

@@ -535,7 +535,7 @@ class US extends FixedLength
   encode: (values) ->
     @buffer = @context.endianess.pack_uint16s(values)
 
-# base class for the 'other' VRs ... OB, OW, OF, UN
+# base class for the 'other' VRs ... OB, OW, OF, OD, UN
 class OtherVR extends FixedLength
   base64_values: true
   explicit_value_length_bytes: 6
@@ -595,6 +595,13 @@ class OW extends OtherVR
 #
 ##
 class OF extends OtherVR
+
+##
+#
+# DICOM OD (= Other Double)
+#
+##
+class OD extends OtherVR
 
 
 ##
@@ -850,6 +857,7 @@ _VR_DICT = {
   'UN': UN,
   'OW': OW,
   'OF': OF,
+  'OD': OD,
 
   # sequence
   'SQ': SQ,
@@ -902,6 +910,7 @@ exports.US = US
 exports.OB = OB
 exports.OW = OW
 exports.OF = OF
+exports.OD = OD
 exports.UN = UN
 exports.SQ = SQ
 
