@@ -215,9 +215,11 @@ class Decoder extends stream.Transform
     element = tags.for_tag(tag)
     if @context.top().encapsulated
       # we are in encapsulated OB ... just stream the content out
-      obj = vrs.dicom_command(element, "start_item")
+      bd_offset = @buffer.stream_position
+      bd_length = value_length
+      obj = new vrs.DicomEvent(element, null, start_pos, "start_item", null, bd_offset, bd_length)
       @log_and_push obj
-      _obj = vrs.dicom_command(element, "end_item")
+      _obj = new vrs.DicomEvent(element, null, start_pos, "end_item", null, bd_offset, bd_length)
       @_stream_bytes(value_length, _obj)
       return undefined # no emit by main loop, thank you
     else
@@ -225,16 +227,16 @@ class Decoder extends stream.Transform
       if value_length != vrs.UNDEFINED_LENGTH
         end_position = @buffer.stream_position + value_length
       end_cb = () =>
-        _obj = vrs.dicom_command(element, 'end_item')
+        _obj = new vrs.DicomEvent(element, null, start_pos, "end_item")
         @log_and_push _obj
       @context.push({}, end_position, end_cb)
-      obj = vrs.dicom_command(element, 'start_item')
+      obj = new vrs.DicomEvent(element, null, start_pos, "start_item")
       @log_and_push obj
 
   _handle_itemdelimitation: (tag, start_position) ->
     # always standard ts
     value_length = @_consume_std_value_length()
-    obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, 'end_item')
+    obj = new vrs.DicomEvent(tags.for_tag(tag), null, start_position, 'end_item')
     @context.pop()
     @log_and_push obj
 
@@ -247,7 +249,7 @@ class Decoder extends stream.Transform
       # we were inside encapsulated pixeldata - SequenceDelimitationItem
       # ends the pixeldata element, not some sequence
       command = 'end_element'
-    obj = new vrs.DicomEvent(tags.for_tag(tag), null, null, command)
+    obj = new vrs.DicomEvent(tags.for_tag(tag), null, start_position, command)
     @log_and_push obj
 
   # stream x bytes out
@@ -274,7 +276,7 @@ class ByteStreamer
     while @bytes > 0
       buff = @buffer.easy_consume(@bytes)
       @bytes -= buff.length
-      obj = vrs.dicom_raw(buff)
+      obj = new vrs.DicomEvent(undefined, undefined, undefined, undefined, buff)
       @decoder.log_and_push obj
     if @emitObj?
       @decoder.log_and_push @emitObj

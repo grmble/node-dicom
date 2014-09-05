@@ -330,28 +330,20 @@ _iconv_charset = (spec_cs) ->
 #
 ##
 class DicomEvent
-  constructor: (@element, @vr, @raw, @command) ->
+  constructor: (@element, @vr, @offset, @command, @raw, @bulkdata_offset, @bulkdata_length) ->
   log_summary: () ->
-    summary = {}
-    if @element
-      summary.element = @element.log_summary?()
-    if @vr
-      summary.vr = @vr.log_summary?()
-    if @raw
-      summary.raw = @raw.length
-    if @command
-      summary.command = @command
+    summary =
+      element: @element?.log_summary?(),
+      vr: @vr?.log_summary?(),
+      offset: @offset,
+      command: @command,
+      raw: @raw?.length,
+      bulkdata_offset: @bulkdata_offset,
+      bulkdata_length: @bulkdata_length
+
     return summary
 
-dicom_raw = (buffer) ->
-  return new DicomEvent(null, null, buffer)
-
-dicom_command = (tag, cmd) ->
-  return new DicomEvent(tag, null, null, cmd)
-
 exports.DicomEvent = DicomEvent
-exports.dicom_raw = dicom_raw
-exports.dicom_command = dicom_command
 
 ##
 # VR base class.
@@ -411,16 +403,18 @@ class VR
       throw new DicomError("VR::consume_and_emit is not prepared to handle UNDEFINED_LENGTH")
     if value_length < (decoder.streaming_value_length_minimum ? 256)
       @buffer = readbuffer.consume(value_length)
-      obj = new DicomEvent(element, this, null, "element")
+      obj = new DicomEvent(element, this, start_position, "element")
       decoder.log_and_push obj
     else
-      @stream_element(element, readbuffer, decoder, value_length)
+      @stream_element(element, readbuffer, decoder, start_position, value_length)
   
   # stream the element out (well, the byte buffers anyway)
-  stream_element: (element, readbuffer, decoder, value_length) ->
-    obj = new DicomEvent(element, this, null, "start_element")
+  stream_element: (element, readbuffer, decoder, start_position, value_length) ->
+    bd_offset = decoder.buffer.stream_position
+    bd_length = value_length
+    obj = new DicomEvent(element, this, start_position, "start_element", null, bd_offset, bd_length)
     decoder.log_and_push obj
-    obj = new DicomEvent(element, this, null, "end_element")
+    obj = new DicomEvent(element, this, start_position, "end_element", null, bd_offset, bd_length)
     decoder._stream_bytes(value_length, obj)
 
   # log summary for bunyan
@@ -564,7 +558,7 @@ class OB extends OtherVR
     # push encaps context
     context = decoder.context
     context.push {encapsulated: true}
-    obj = new DicomEvent(element, this, undefined, "start_element")
+    obj = new DicomEvent(element, this, start_position, "start_element")
     decoder.log_and_push obj
 
 ##
@@ -581,11 +575,11 @@ class UN extends OtherVR
       # just stream it out, like all other OtherVRs
       return @_consume_and_emit_known_value_length(element, readbuffer, decoder, start_position, value_length)
     end_cb = () ->
-      _obj = new DicomEvent(element, this, null, "end_sequence")
+      _obj = new DicomEvent(element, this, start_position, "end_sequence")
       decoder.log_and_push _obj
     decoder.context.push({explicit: false}, null, end_cb)
 
-    obj = new DicomEvent(element, this, null, "start_sequence")
+    obj = new DicomEvent(element, this, start_position, "start_sequence")
     decoder.log_and_push obj
 
 ##
@@ -625,10 +619,10 @@ class SQ extends VR
     if value_length != UNDEFINED_LENGTH
       end_position = start_position + value_length
     end_cb = () ->
-      _obj = new DicomEvent(element, this, null, "end_sequence")
+      _obj = new DicomEvent(element, this, start_position, "end_sequence")
       decoder.log_and_push _obj
     decoder.context.push({}, end_position, end_cb)
-    obj = new DicomEvent(element, this, null, "start_sequence")
+    obj = new DicomEvent(element, this, start_position, "start_sequence")
     decoder.log_and_push obj
 
 
@@ -878,7 +872,16 @@ _VR_DICT = {
   'UT': UT,
 }
 
+_init_vr_names = () ->
+  for name,vr of _VR_DICT
+    vr::name = name
+  undefined
+_init_vr_names()
+
 for_name = (name, ctx, buffer, values) ->
+  if name == 'OB or OW'
+    log.debug({vr: 'OW'}, "for_name: using OW for 'OB or OW'") if log.debug()
+    name = 'OW'
   constr_fn = _VR_DICT[name]
   if not constr_fn?
     throw new DicomError("Unknown VR: #{name}")

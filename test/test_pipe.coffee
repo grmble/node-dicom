@@ -10,64 +10,108 @@ json = require "../lib/json"
 
 exports.Dicom2JsonTest =
   "test defined length sequences/items": (test) ->
-    test.expect 2
+    test.expect 4
     json.gunzip2json "test/deflate_tests/report.gz", (err, data) ->
       if err
         console.log "Error:", err.stack
       test.equal 1111, json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeValue)
       test.equal "Consultation Report", json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeMeaning)
+
+      # ContentSequence last item of 5 has BulkDataURI TextValue (among others)
+      # offset 5562, length 268
+      bd_elem = json.get_element(data, tags.ContentSequence, 4, tags.TextValue)
+      bd = bd_elem.BulkDataURI
+      test.ok /offset=5562\&/.test(bd)
+      test.ok /length=268$/.test(bd)
       test.done()
 
   "test undefined length sequences/items": (test) ->
-    test.expect 2
+    test.expect 4
     json.gunzip2json "test/report_undef_len.gz", (err, data) ->
       if err
         console.log "Error:", err.stack
       test.equal 1111, json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeValue)
       test.equal "Consultation Report", json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeMeaning)
+      #
+      # ContentSequence last item of 5 has BulkDataURI TextValue (among others)
+      # offset 6110, length 268
+      bd_elem = json.get_element(data, tags.ContentSequence, 4, tags.TextValue)
+      bd = bd_elem.BulkDataURI
+      test.ok /offset=6110\&/.test(bd)
+      test.ok /length=268$/.test(bd)
       test.done()
 
   "test implicit vr little endian": (test) ->
-    test.expect 2
+    test.expect 4
     json.gunzip2json "test/report_default_ts.gz", (err, data) ->
       if err
         console.log "Error:", err.stack
       test.equal 1111, json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeValue)
       test.equal "Consultation Report", json.get_value(data, tags.ConceptNameCodeSequence, 0, tags.CodeMeaning)
+      #
+      # ContentSequence last item of 5 has BulkDataURI TextValue (among others)
+      # offset 5936, length 268
+      bd_elem = json.get_element(data, tags.ContentSequence, 4, tags.TextValue)
+      bd = bd_elem.BulkDataURI
+      test.ok /offset=5936\&/.test(bd)
+      test.ok /length=268$/.test(bd)
       test.done()
 
   "test greek charset (isoir126)": (test) ->
-    test.expect 1
+    test.expect 3
     json.gunzip2json "test/charsettests/SCSGREEK.gz", (err, data) ->
       if err
         console.log "Error:", err.stack
       test.equal "Διονυσιος", json.get_value(data, tags.PatientName).Alphabetic
+      # PixelData native offset 866, length 262144
+      bd_elem = json.get_element(data, tags.PixelData)
+      bd = bd_elem.BulkDataURI
+      test.ok /offset=866\&/.test(bd)
+      test.ok /length=262144$/.test(bd)
       test.done()
 
   "test utf8 charset": (test) ->
-    test.expect 2
+    test.expect 4
     json.gunzip2json "test/charsettests/SCSX1.gz", (err, data) ->
       if err
         console.log "Error:", err.stack
       test.equal "Wang^XiaoDong", json.get_value(data, tags.PatientName).Alphabetic
       test.equal "王^小東", json.get_value(data, tags.PatientName).Ideographic
+
+      # PixelData native offset 886, length 262144
+      bd_elem = json.get_element(data, tags.PixelData)
+      bd = bd_elem.BulkDataURI
+      test.ok /offset=886\&/.test(bd)
+      test.ok /length=262144$/.test(bd)
       test.done()
 
   "test gb18030 charset": (test) ->
-    test.expect 2
+    test.expect 4
     json.gunzip2json "test/charsettests/SCSX2.gz", (err, data) ->
       if err
         console.log "Error:", err.stack
       test.equal "Wang^XiaoDong", json.get_value(data, tags.PatientName).Alphabetic
       test.equal "王^小东", json.get_value(data, tags.PatientName).Ideographic
+
+      # PixelData native offset 880, length 262144
+      bd_elem = json.get_element(data, tags.PixelData)
+      bd = bd_elem.BulkDataURI
+      test.ok /offset=880\&/.test(bd)
+      test.ok /length=262144$/.test(bd)
       test.done()
 
   "test quotes in json": (test) ->
-    test.expect 1
+    test.expect 3
     json.gunzip2json "test/quotes_jpls.dcm.gz", (err, data) ->
       if err
         console.log "Error:", err.stack
       test.deepEqual {Alphabetic: "\"D'Artagnan\"^asdf"}, json.get_value(data, tags.PatientName)
+
+      # PixelData encapsulated fragment 1 offset 918, length 26272
+      bd_elem = json.get_element(data, tags.PixelData)
+      bd = bd_elem.DataFragment[1].BulkDataURI
+      test.ok /offset=918\&/.test(bd)
+      test.ok /length=26272$/.test(bd)
       test.done()
 
   "test inlinebinary ob": (test) ->
@@ -103,6 +147,23 @@ exports.Dicom2JsonTest =
       test.ok priv_cont_sq
       test.equal 'SQ', priv_cont_sq.vr
       test.equal 5, priv_cont_sq.Value.length
+      test.done()
+
+  "test decoding implicit vr pixeldata": (test) ->
+    test.expect 4
+    json.gunzip2json "test/hebrew_ivrle.gz", (err, data) ->
+      if err
+        console.log "Error:", err.stack
+
+      test.equal "שרון^דבורה", json.get_value(data, tags.PatientName).Alphabetic
+
+      # PixelData native offset 848, length 262144
+      bd_elem = json.get_element(data, tags.PixelData)
+      bd = bd_elem.BulkDataURI
+      test.ok /offset=848\&/.test(bd)
+      test.ok /length=262144$/.test(bd)
+
+      test.equal 'OW', bd_elem.vr
       test.done()
 
 

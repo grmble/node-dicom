@@ -25,16 +25,14 @@ log = require("./logger")("json")
 # takes a stream of DicomEvents and produces
 # JSON.
 #
-# at the moment, this simply
-# ignores start_element/raw/end_element
-# i.e. bulk data (= data where the length
-# exceeds the decoder option) is ignored
+# * bulkdata_uri: uri for emitting bulkdata - ?offset=x&length=y will be appended
 ##
 class JsonEncoder extends stream.Transform
   constructor: (options)->
     if not (this instanceof JsonEncoder)
       return new JsonEncoder(options)
     super(options)
+    @_bulkdata_uri = options?.bulkdata_uri
     @_writableState.objectMode = true
     @_readableState.objectMode = false
     @depth = 0
@@ -70,7 +68,7 @@ class JsonEncoder extends stream.Transform
     return if @ignore
     key = printf '"%08X"', event.element.tag
     key = printf "%*s", key, key.length + @depth
-    obj = {vr: event.element.vr}
+    obj = {vr: event.vr.name}
     if event.vr.base64_values
       obj.InlineBinary = event.vr.values()
     else
@@ -88,7 +86,7 @@ class JsonEncoder extends stream.Transform
     start = ',\n'
     if @fresh
       start = '{\n'
-    @push printf('%s%s: {"vr": "SQ", "Value": [', start, key)
+    @push printf('%s%s: {"vr":"SQ", "Value": [', start, key)
     @fresh = true
     @depth++
 
@@ -100,22 +98,52 @@ class JsonEncoder extends stream.Transform
 
   start_item: (event) ->
     return if @ignore
-    # will trigger { on next element
     if not @fresh
       @push ","
     @fresh = true
+    if event.bulkdata_offset and event.bulkdata_length
+      # encapsulated pixeldata
+      bd_uri = @_bulkdata_uri + "?offset=" + event.bulkdata_offset + "&length=" + event.bulkdata_length
+      @push printf('{"BulkDataURI":"%s"', bd_uri)
+      @fresh = false
+
   end_item: (event) ->
     return if @ignore
     if @fresh
       @push "{}"
     else
       @push "}"
+    @fresh = false
 
   # ignore everything inside start_element / end_element
   start_element: (event) ->
-    @ignore++
+    if @_bulkdata_uri
+      key = printf '"%08X"', event.element.tag
+      key = printf "%*s", key, key.length + @depth
+      start = ',\n'
+      if @fresh
+        start = '{\n'
+      if event.bulkdata_offset and event.bulkdata_length
+        bd_uri = @_bulkdata_uri + "?offset=" + event.bulkdata_offset + "&length=" + event.bulkdata_length
+        @push printf('%s%s: {"vr":"%s","BulkDataURI":"%s"', start, key, event.vr.name, bd_uri)
+      else
+        @push printf('%s%s: {"vr":"%s","DataFragment": [', start, key, event.vr.name)
+      @fresh = true
+      @depth++
+    else
+      @ignore++
+
   end_element: (event) ->
-    @ignore--
+    if @ignore
+      @ignore--
+      return
+    if @_bulkdata_uri
+      @fresh = false
+      if event.bulkdata_offset and event.bulkdata_length
+        @push '}'
+      else
+        @push ']}'
+      @depth--
 
 ##
 #
@@ -173,7 +201,7 @@ file2jsonstream = (fn, cb) ->
   .on 'error', cb
   .pipe decoder {guess_header: true}
   .on 'error', cb
-  .pipe new JsonEncoder()
+  .pipe new JsonEncoder({bulkdata_uri: fn})
   .on 'error', cb
 
 file2json = (fn, cb) ->
@@ -189,7 +217,7 @@ gunzip2jsonstream = (fn, cb) ->
   .on 'error', cb
   .pipe decoder {guess_header: true}
   .on 'error', cb
-  .pipe new JsonEncoder()
+  .pipe new JsonEncoder({bulkdata_uri: fn})
   .on 'error', cb
 
 gunzip2json = (fn, cb) ->

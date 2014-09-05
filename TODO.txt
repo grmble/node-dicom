@@ -1,9 +1,7 @@
 (B) Documentation (ronn?), installation +Docs
-(B) Emit BulkDataURI +JSON
 (B) Implement Encoder +Encoder
-(C) Tag dictionary "OB or OW" / ImplicitVR OW +Decoder
 (C) Use grunt instead of cake
-(D) Implement Dataset +Dataset
+(D) Implement Dataset +Dataset +DoWeNeedThis
 (D) Support multi-valued 0008,0005 + charset extension
 (D) undefined instead of 'undefined' for undefined VR elements +Decoder
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
@@ -25,10 +23,12 @@ x (A) Test undefined length UN +Testing
 x (A) Work from master
 x (B) Bug: partial dataelement at end of file should be an error
 x (B) DS/IS should be numbers in Json Model
+x (B) Emit BulkDataURI +JSON
 x (B) Encapsulated content streaming.
 x (B) Group Lengths are UL
 x (B) Switch charsets after 0008,0005 SpecificCharacterSet +Decoder
 x (B) UN items with undefined length.
 x (C) PN component groups +Decoder
+x (C) Tag dictionary "OB or OW" / ImplicitVR OW +Decoder
 x (C) Transfer syntax switch / metadata parsing +Decoder
 x (E) min_streaming_element_size parameter for decoder
