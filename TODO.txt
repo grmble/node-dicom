@@ -1,3 +1,4 @@
+(A) Test BulkDataURI with quotes
 (B) Documentation (ronn?), installation +Docs
 (B) Implement Encoder +Encoder
 (C) Use grunt instead of cake
