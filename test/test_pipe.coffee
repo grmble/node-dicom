@@ -100,9 +100,9 @@ exports.Dicom2JsonTest =
       test.ok /length=262144$/.test(bd)
       test.done()
 
-  "test quotes in json": (test) ->
+  "test quotes in json and encaps pixeldata": (test) ->
     test.expect 3
-    json.gunzip2json "test/quotes_jpls.dcm.gz", (err, data) ->
+    json.gunzip2json {filename: "test/quotes_jpls.dcm.gz", bulkdata_uri: "\"D'Artagnan\""}, (err, data) ->
       if err
         console.log "Error:", err.stack
       test.deepEqual {Alphabetic: "\"D'Artagnan\"^asdf"}, json.get_value(data, tags.PatientName)

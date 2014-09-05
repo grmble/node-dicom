@@ -104,7 +104,7 @@ class JsonEncoder extends stream.Transform
     if event.bulkdata_offset and event.bulkdata_length
       # encapsulated pixeldata
       bd_uri = @_bulkdata_uri + "?offset=" + event.bulkdata_offset + "&length=" + event.bulkdata_length
-      @push printf('{"BulkDataURI":"%s"', bd_uri)
+      @push printf('{"BulkDataURI":%s', JSON.stringify(bd_uri))
       @fresh = false
 
   end_item: (event) ->
@@ -125,7 +125,7 @@ class JsonEncoder extends stream.Transform
         start = '{\n'
       if event.bulkdata_offset and event.bulkdata_length
         bd_uri = @_bulkdata_uri + "?offset=" + event.bulkdata_offset + "&length=" + event.bulkdata_length
-        @push printf('%s%s: {"vr":"%s","BulkDataURI":"%s"', start, key, event.vr.name, bd_uri)
+        @push printf('%s%s: {"vr":"%s","BulkDataURI":%s', start, key, event.vr.name, JSON.stringify(bd_uri))
       else
         @push printf('%s%s: {"vr":"%s","DataFragment": [', start, key, event.vr.name)
       @fresh = true
@@ -196,8 +196,20 @@ get_value = (json, path...) ->
 get_vr = (json, path...) ->
   return get_element(json, path...)?.vr
 
+_get_filename = (obj_or_fn) ->
+  if typeof(obj_or_fn) == 'string'
+    obj_or_fn
+  else
+    obj_or_fn.filename
+
+_get_bulkdata_uri = (obj_or_fn) ->
+  if typeof(obj_or_fn) == 'string'
+    obj_or_fn
+  else
+    obj_or_fn.bulkdata_uri ? obj_or_fn.filename
+
 file2jsonstream = (fn, cb) ->
-  fs.createReadStream fn
+  fs.createReadStream _get_filename(fn)
   .on 'error', cb
   .pipe decoder {guess_header: true}
   .on 'error', cb
@@ -211,13 +223,13 @@ file2json = (fn, cb) ->
 
 # cb is called for errors
 gunzip2jsonstream = (fn, cb) ->
-  fs.createReadStream fn
+  fs.createReadStream _get_filename(fn)
   .on 'error', cb
   .pipe zlib.createGunzip()
   .on 'error', cb
   .pipe decoder {guess_header: true}
   .on 'error', cb
-  .pipe new JsonEncoder({bulkdata_uri: fn})
+  .pipe new JsonEncoder({bulkdata_uri: _get_bulkdata_uri(fn)})
   .on 'error', cb
 
 gunzip2json = (fn, cb) ->
