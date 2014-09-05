@@ -5,3 +5,5 @@ extra
 node_modules
 tags
 test
+*.x
+x.*
