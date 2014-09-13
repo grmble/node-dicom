@@ -24,15 +24,16 @@ Limitations:
   in-memory, but emitted as `start_element`,
   a sequence of raw events with the encoded value
   and an `end_element` event.  The JSON Encoder 
-  currently ignores these bulkdata stream parts.
+  emits these as bulkdata URLs, but currently
+  there is no way to use these urls (except parsing
+  the url and extracting the bulkdata using
+  offset and length from the url).
+* `Other` DICOM VRs (`OB`, `OW`, `OF`, `OD`, `UN`)
+  do not provide a way to interpret the data,
+  i.e. it's just passed on as a byte array, unchanged.
 
 Examples:
 ---------
-
-The examples given here will not work if
-you installed via npm.  The README for 
-the last npm release is at
-https://github.com/grmble/node-dicom/tree/e145f6c4b6e31e19d73e20777bda8c656996a4b2
 
 Read a DICOM file, produce JSON Model, and print some data:
 
