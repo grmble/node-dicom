@@ -1,6 +1,8 @@
 Node.js DICOM
 =============
 
+[![Build Status](https://travis-ci.org/grmble/node-dicom.svg?branch=master)](https://travis-ci.org/grmble/node-dicom)
+
 The package provides the following:
 
 * Data dictionary according to the 2014a standard.
