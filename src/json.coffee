@@ -161,7 +161,20 @@ class JsonSink extends ConcatStream
     @on 'error', (err) ->
       log.debug {error: err}, "JsonSink: on error ... calling cb"
       cb(err)
-      
+
+##
+#
+# Emit DicomEvents
+#
+##
+class JsonSource extends stream.Writable
+  constructor: (options) ->
+    if options?
+      options = {}
+    options.objectMode = true
+    super(options)
+
+
 exports.JsonEncoder = JsonEncoder
 exports.JsonSink = JsonSink
 
