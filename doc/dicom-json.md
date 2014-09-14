@@ -1,22 +1,12 @@
-dicom.json(3) - Dicom JSON Model
-================================
+dicom.json(3) - Dicom JSON Model utilities
+===========================================
 
 ##SYNOPSIS
 
-    var encoder = new dicom.json.JsonEncoder({bulkdata_uri: "file:///tmp/x.dcm"});
-    var sink = new dicom.json.JsonSink(function(err, data) {
-      // data contains the parsed JSON model
-    });
-    encoder.pipe(sink);
-    // and you'll need to pipe dicom events into encoder
-
-    // these helpers do all that and take care to pass errors along
     file2json("/tmp/example.dcm", err_data_cb);
     gunzip2json("/tmp/example.dcm.gz", err_data_cb);
-
-    // or only the streaming part (e.g. to pass it on over http)
-    file2jsonstream("/tmp/example.dcm").pipe(new dicom.json.JsonSink(err_data_cb));
-    gunzip2jsonstream("/tmp/example.dcm").pipe(new dicom.json.JsonSink(err_data_cb));
+    file2jsonstream("/tmp/example.dcm", err_data_cb).pipe(dicom.json.sink(err_data_cb));
+    gunzip2jsonstream("/tmp/example.dcm.gz", err_data_cb).pipe(dicom.json.sink(err_data_cb));
 
     // in a callback with parsed json
     var el = dicom.json.get_element(data, dicom.tags.StudyInstanceUID);
@@ -24,15 +14,6 @@ dicom.json(3) - Dicom JSON Model
     var vr = dicom.json.get_vr(data, dicom.tags.StudyInstanceUID);
 
 ##DESCRIPTION
-
-###JsonEncoder
-
-`JsonEncoder` is a transform stream that takes a stream of DicomEvent instances
-and produces chunks of JSON.
-###JsonSink
-
-`JsonSink` is a transform stream that collects the JSON chunks emitted
-by `dicom.json.JsonEncoder` and parses the result.
 
 ###Pipe helpers
 `file2json` and `gunzip2json` set up the whole pipeline from a
@@ -42,6 +23,14 @@ to pass errors along to the supplied callback.
 `file2jsonstream` and `gunzip2jsonstream` set up the pipeline
 only until `dicom.json.JsonEncoder`, e.g. for writing JSON to a
 file or a network socket.
+
+These 4 functions take the following arguments:
+
+* `filename`: a filename (string) or a filename specifier,
+  an object with the properties `.filename` and `.bulkdata_uri`.
+  A string filename will be re-used as `bulkdata_uri`.
+* `callback`: standard node callback, error or parsed json data.
+  The 2 streaming calls will only call the callback on error.
 
 ###JSON Model helpers
 
@@ -86,14 +75,7 @@ the `Value` property.
 The Dicom JSON Model is defined at
 http://medical.nema.org/dicom/2013/output/chtml/part18/sect_F.2.html
 
-###JsonEncoder
-
-`start_element`/`end_element` blocks produced by `dicom.decoder`
-are emitted as bulkdata uri elements, so you can't get at that data
-anymore except by parsing the uri and going to the original input.
-
-If no `bulkdata_uri` is given, bulkdata elements will not be emitted at all.
-
-
 ##SEE ALSO
 * dicom.decoder
+* dicom.json.encoder
+* dicom.json.sink

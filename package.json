@@ -21,13 +21,14 @@
     "test": "nodeunit test"
   },
   "engines": {
-    "//":   "node v0.10.31 is bad, seg faults.  use 0.10.30 or 0.11",
+    "//": "node v0.10.31 is bad, seg faults.  use 0.10.30 or 0.11",
     "node": ">0.10.0"
   },
   "dependencies": {
     "bunyan": "^1.0.1",
     "concat-stream": "^1.4.6",
     "iconv-lite": "^0.4.4",
+    "minimist": "^1.1.0",
     "printf": "0.2.x"
   },
   "devDependencies": {

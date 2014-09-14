@@ -29,7 +29,8 @@ _env = (what, name) ->
     process.env["#{ENV_PREFIX}_#{_what}"] ?
     DEFAULTS[_what])
 
-logger = (name) ->
+logger = (names...) ->
+  name = names.join("_")
   obj =
     'name': name,
     'level': _env('level', name)
