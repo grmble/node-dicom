@@ -45,7 +45,7 @@ class SeqEntry
   constructor: (items) ->
     @_queue = (x for x in items)
     @_queue.reverse()
-    log.debug({length: @_queue.length}, "SeqEntry")
+    log.trace({length: @_queue.length}, "SeqEntry")
   # SeqEntry unshifts json model, which pull be pushed
   # on the stack in an ItemEntry
   unshift: () ->
@@ -90,7 +90,7 @@ class EmitStack
 class JsonSource extends stream.Readable
   constructor: (data, options) ->
     if not (this instanceof JsonSource)
-      return new JsonSink(data, options)
+      return new JsonSource(data, options)
     if not options?
       options = {}
     options.objectMode = true
@@ -101,14 +101,14 @@ class JsonSource extends stream.Readable
     ts_name = 'ExplicitVRLittleEndian' if not ts_name
     ts = uids.for_uid(ts_name)
     @_context = new vrs.Context({}, ts.make_context())
-    log.debug({context: @_context}, "JsonSource context")
+    log.trace({context: @_context}, "JsonSource context")
   _read: (size) ->
     try
-      log.debug({size: size}, "JsonSource _read")
+      log.trace({size: size}, "JsonSource _read")
       read_more = true
       while read_more
         if @_stack.eof()
-          log.debug "_stack eof: we are done"
+          log.trace "_stack eof: we are done"
           read_more = false
           return
         else
@@ -117,22 +117,22 @@ class JsonSource extends stream.Readable
             if typeof(k) == 'string'
               [el, v] = @_stack.data(k)
               obj = @_dicom_event(el, v)
-              log.debug obj.log_summary?(), "emitting"
+              log.trace obj.log_summary?(), "emitting"
               read_more = @push(obj)
               if obj.command == 'start_sequence'
-                log.debug v, "pushing sequence items"
+                log.trace v, "pushing sequence items"
                 @_stack.push_seq(v.Value)
             else
               # emitting an item in a sequence
               @_stack.push(k, new vrs.DicomEvent(tags.ItemDelimitationItem, null, null, "end_item"))
               obj = new vrs.DicomEvent(tags.Item, null, null, "start_item")
-              log.debug obj.log_summary?(), "emitting start item"
+              log.trace obj.log_summary?(), "emitting start item"
               read_more = @push(obj)
           else
             entry = @_stack.pop()
             obj = entry.end_event()
             if obj
-              log.debug obj.log_summary?(), "emitstack end event"
+              log.trace obj.log_summary?(), "emitstack end event"
               read_more = @push(obj)
       return undefined
     catch err
@@ -141,7 +141,7 @@ class JsonSource extends stream.Readable
   _dicom_event: (el, v) ->
     if @_is_seq_value(v)
       if (v.vr == 'UN' || v.vr =='SQ')
-        return new vrs.DicomEvent(el, vrs.for_name(v.vr), null, "start_sequence")
+        return new vrs.DicomEvent(el, vrs.for_name(v.vr, @_context), null, "start_sequence")
       else
         throw new vrs.DicomError("can not emit sequence values for vr " + v.vr + " tag " + el.tag_str)
     else

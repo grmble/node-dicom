@@ -195,7 +195,7 @@ class Decoder extends stream.Transform
     @_decode_metainfo()
 
   _consume_std_value_length: () =>
-    length_element = new vrs.UL(@context.top())
+    length_element = new vrs.UL(@context.top_little_endian())
     return length_element.consume_value(@buffer)
 
   _handle_element: (tag, start_position) ->

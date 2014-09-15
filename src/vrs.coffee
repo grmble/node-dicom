@@ -262,6 +262,10 @@ class ContextStack
   top: () ->
     @_stack[@_stack.length - 1]?.context
 
+  top_little_endian: () ->
+    _top = @top()
+    return new Context(_top, {endianess: LITTLE_ENDIAN})
+
   stack_depth: () ->
     @_stack.length
 
@@ -370,12 +374,17 @@ class VR
   value: () ->
     @values()[0]
 
-  # consume value length from a readbuffer, return value length
-  consume_value_length: (readbuffer) ->
+  _value_length_bytes: () ->
     vlb = if @context.explicit
       @explicit_value_length_bytes
     else
       @implicit_value_length_bytes
+    log.trace({length: vlb}, "value_length_bytes") if log.trace()
+    return vlb
+
+  # consume value length from a readbuffer, return value length
+  consume_value_length: (readbuffer) ->
+    vlb = @_value_length_bytes()
     switch vlb
       when 2 then length_element = new US(@context)
       when 4 then length_element = new UL(@context)
@@ -384,9 +393,27 @@ class VR
         readbuffer.consume 2
         length_element = new UL(@context)
       else
-        raise new DicomError("invalue value length bytes (not 2,4 or 6): " + vlb)
+        raise new DicomError("incorrect value length bytes (not 2,4 or 6): " + vlb)
     value_length = length_element.consume_value(readbuffer)
     return value_length
+
+  # encode value length
+  _encode_value_length: (encoder, value_length) ->
+    if not value_length?
+      value_length = @buffer.length
+    vlb = @_value_length_bytes()
+    switch vlb
+      when 2 then length_element = new US(@context, null, [value_length])
+      when 4 then length_element = new UL(@context, null, [value_length])
+      when 6
+        log.trace("encode_value_length: 6 byte VR, emitting 0x0000")
+        encoder.push(new Buffer([0,0]))
+        length_element = new UL(@context, null, [value_length])
+      else
+        raise new DicomError("incorrect value length bytes (not 2,4 or 6): " + vlb)
+    log.trace({length: length_element.buffer.length, value_length: value_length},
+              "encode_value_length: emitting value length") if log.trace()
+    encoder.push(length_element.buffer)
 
   # consume value length and then the values
   consume: (readbuffer) ->
@@ -416,6 +443,21 @@ class VR
     decoder.log_and_push obj
     obj = new DicomEvent(element, this, start_position, "end_element", null, bd_offset, bd_length)
     decoder._stream_bytes(value_length, obj)
+
+  # encoding helpers
+  _encode_and_emit: (element, encoder) ->
+    @_encode_and_emit_tag_vr(element, encoder)
+    @_encode_value_length(encoder)
+    log.trace({length: @buffer.length}, "_encode_and_emit: emitting vr buffer")
+    encoder.push(@buffer)
+
+  _encode_and_emit_tag_vr: (element, encoder) ->
+    log.trace({tag: element.tag}, "_encode_and_emit_tag_vr: emitting tag") if log.trace()
+    tag = new AT(@context, null, [element.tag])
+    encoder.push(tag.buffer)
+    if @context.explicit
+      log.trace({vr: @name}, "_encode_and_emit_tag_vr: emitting vr") if log.trace()
+      encoder.push(new Buffer(@name, "binary"))
 
   # log summary for bunyan
   log_summary: () ->
@@ -455,7 +497,7 @@ class AT extends FixedLength
   encode: (values) ->
     g_e = []
     for v in values
-      g = v >> 16
+      g = (v >> 16) & 0xFFFF
       e = v & 0xFFFF
       g_e.push g
       g_e.push e
@@ -582,11 +624,16 @@ class UN extends OtherVR
     obj = new DicomEvent(element, this, start_position, "start_sequence")
     decoder.log_and_push obj
 
+  # encoding helpers
+  _encode_and_emit_seq: (element, encoder) ->
+    @_encode_and_emit_tag_vr(element, encoder)
+    @_encode_value_length(encoder, UNDEFINED_LENGTH)
+    encoder.context.push({})
 ##
 #
 # Dicom OW (= Other Word)
 #
-##
+#
 class OW extends OtherVR
 
 ##
@@ -632,6 +679,14 @@ class SQ extends VR
     obj = new DicomEvent(element, this, start_position, "start_sequence")
     decoder.log_and_push obj
 
+  # encoding helpers
+  _encode_and_emit: (element, encoder) ->
+    throw new DicomError("internal error: _encode_and_emit should not be called")
+
+  _encode_and_emit_seq: (element, encoder) ->
+    @_encode_and_emit_tag_vr(element, encoder)
+    @_encode_value_length(encoder, UNDEFINED_LENGTH)
+    encoder.context.push({})
 
 _ends_with = (str, char) ->
   len = str.length

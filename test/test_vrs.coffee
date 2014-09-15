@@ -31,9 +31,12 @@ DEF_CTX = new vrs.Context({}, {})
 
 exports.ATTest =
   "test encoding": (test) ->
-    test.expect 1
+    test.expect 2
     at = new vrs.AT(DEF_CTX, null, [0x00100012, 0x0020001D])
     expect = new Buffer([0x10, 0x00, 0x12, 0x00, 0x20, 0x00, 0x1D, 0x00])
+    test.deepEqual expect, at.buffer
+    at = new vrs.AT(DEF_CTX, null, [0xfffee000])
+    expect = new Buffer([0xfe, 0xff, 0x00, 0xe0])
     test.deepEqual expect, at.buffer
     test.done()
   "test decoding": (test) ->

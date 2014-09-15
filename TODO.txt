@@ -1,6 +1,8 @@
 (B) Documentation (ronn?), installation +Docs
 (B) Implement Encoder +Encoder
 (C) JsonSource: handle InlineBinary
+(C) Encoder: use encoder context, not vr passed in from whatever source
+(C) Test BigEndian explicit length sequence/items
 (C) Use grunt instead of cake
 (D) Implement Dataset +Dataset +DoWeNeedThis
 (D) Support multi-valued 0008,0005 + charset extension
