@@ -1,5 +1,6 @@
 (B) Documentation (ronn?), installation +Docs
 (B) Implement Encoder +Encoder
+(C) JsonSource: handle InlineBinary
 (C) Use grunt instead of cake
 (D) Implement Dataset +Dataset +DoWeNeedThis
 (D) Support multi-valued 0008,0005 + charset extension

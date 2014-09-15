@@ -4,14 +4,16 @@ tags = require "../lib/tags"
 
 exports.TagsTest =
   "test for_tag": (test) ->
-    test.expect 6
+    test.expect 7
     el1 = tags.for_tag(0x00100010)
     el2 = tags.for_tag('PatientName')
     el3 = tags.PatientName
     el4 = tags.for_tag(tags.PatientName)
+    el5 = tags.for_tag('00100010')
     test.equal el1, el2
     test.equal el1, el3
     test.equal el1, el4
+    test.equal el1, el5
     test.equal 'PatientName', el1.name
     test.equal 0x00100010, el1.tag
     test.equal 'PN', el1.vr

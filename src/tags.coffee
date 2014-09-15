@@ -63,7 +63,10 @@ for_tag = (tag) ->
           return el
       return new Element(tag)
     when 'string'
-      return exports[tag]
+      if /[0-9A-F]{8}/.test(tag)
+        return for_tag parseInt(tag, 16)
+      else
+        return exports[tag]
     when 'object'
       return for_tag tag.tag
 
