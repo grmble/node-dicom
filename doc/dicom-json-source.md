@@ -21,7 +21,8 @@ a Dicom JSON Model.
 For details on the Dicom JSON Model, see
 http://medical.nema.org/dicom/2013/output/chtml/part18/sect_F.2.html
 
-Additionaly, the JSON model is normalized before emitting data.
+Additionaly, the JSON model is normalized before emitting data,
+it may be given in a simplified form:
 
 This means:
 * Dicom tags are processed by `tags.for_tag`, this means you can
@@ -41,8 +42,12 @@ As an example, the short JSON model from above can also be given as:
       "PatientID": "0815",
       "IssuerOfPatientID": "BND"}]}
 
+
 ##Limitations
 `JsonSource` can not handle a JSON model with BulkDataURI data.
+
+Using a simplified JSON model is only possible in javascript source code,
+as it is not legal JSON.
 
 
 ##SEE ALSO

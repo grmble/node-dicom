@@ -109,6 +109,7 @@ class JsonSource extends stream.Readable
       while read_more
         if @_stack.eof()
           log.trace "_stack eof: we are done"
+          @push(null)
           read_more = false
           return
         else
