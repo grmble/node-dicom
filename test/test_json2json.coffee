@@ -22,7 +22,6 @@ exports.Json2JsonTest =
     test.expect 1
       
     callback = (err, data) ->
-      console.log "CALLBACK!"
       if err
         console.error "Error:", err
         console.error "stack trace:", err.stack

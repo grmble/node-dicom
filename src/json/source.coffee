@@ -29,9 +29,9 @@ class ItemEntry
     el = tags.for_tag(k)
     if util.isArray(v)
       v = {vr: el.vr, Value: v}
-    else if util.isString(v) or util.isString(v)
+    else if typeof(v) in ['string', 'number']
       v = {vr: el.vr, Value: [v]}
-    else if util.isObject(v)
+    else if typeof(v) == 'object'
       if v.BulkDataURI
         throw new vrs.DicomError("can not emit json model with bulkdata uri: " + v)
       if not v.vr?
@@ -151,7 +151,7 @@ class JsonSource extends stream.Readable
   _is_seq_value: (v) ->
     is_seq = true
     for _v in v.Value
-      if !(util.isObject(_v) && !util.isArray(_v))
+      if !((typeof(_v)=='object') && !util.isArray(_v))
         is_seq = false
     return is_seq
 
