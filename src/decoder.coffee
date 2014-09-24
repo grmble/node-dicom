@@ -61,9 +61,9 @@ class Decoder extends stream.Transform
 
   _transform: (chunk, encoding, cb) ->
     @buffer.push chunk
-    log.debug {buffer: @buffer.log_summary()}, "_transform"
+    log.debug({buffer: @buffer.log_summary()}, "_transform") if log.debug()
     @_action_wrapper(@state)
-    log.debug {buffer: @buffer.log_summary()}, "_transform done, calling cb"
+    log.debug({buffer: @buffer.log_summary()}, "_transform done, calling cb") if log.debug()
     cb()
 
   _flush: (cb) ->
