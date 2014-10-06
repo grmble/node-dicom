@@ -1,6 +1,6 @@
 #! /usr/bin/env /coffee
 
-decoder = require "../lib/pdu"
+pdu = require "../lib/pdu"
 
 ECHO_RAW =[ 1, 0, 0, 0, 0, 197, 0, 1, 0, 0, 84, 69, 83,
             84, 77, 69, 32, 32, 32, 32, 32, 32, 32, 32, 32,
@@ -41,7 +41,7 @@ exports.PDUTest =
   "test decoding echo association request": (test) ->
     test.expect 1
 
-    _decoder = decoder()
+    _decoder = new pdu.PDUDecoder()
     _decoder.on 'data', (pdu) ->
       test.deepEqual ECHO_PDU, pdu.to_json()
       test.done()

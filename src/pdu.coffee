@@ -5,7 +5,7 @@ printf = require("printf")
 readbuffer = require("./readbuffer")
 vrs = require("../lib/vrs")
 
-log = require("./logger")('pdu', 'decoder')
+log = require("./logger")('pdu')
 
 ##
 # PDUDecoder
@@ -60,10 +60,15 @@ class PDUDecoder extends stream.Transform
 
 class PDU
   _json_name: true
+  _single_value: false
 
-  constructor: (@_buff) ->
-    @decode()
-    delete @_buff
+  constructor: (buff_or_json) ->
+    if buff_or_json instanceof Buffer
+      @_buff = buff_or_json
+      @decode()
+      delete @_buff
+    else
+      @from_json buff_or_json
 
   decode_var_items: (start, end) ->
     log.trace({start: start, end: end}, "PDU.decode_var_items") if log.trace()
@@ -122,6 +127,21 @@ class PDU
           _item_value(_item)
     return _json
 
+  from_json: (json) ->
+    if @_single_value
+      @value = json
+      return
+    for _k, _v of @var_item_counts
+      _constr = ITEM_BY_NAME[_k]
+      if not _constr?
+        throw new vrs.DicomError "no such item: #{_k}"
+      if _v == 1
+        this[_k] = new _constr(json[_k])
+      else
+        this[_k] = for _x in json
+          new _constr(_x[_k])
+    return
+
 class PDUAssociateRq extends PDU
   type: 0x01
   name: 'association_rq'
@@ -136,6 +156,25 @@ class PDUAssociateRq extends PDU
     @calling_aet_title = @_buff.slice(20, 36).toString().trim()
     @decode_var_items(68, @_buff.length)
 
+  encode: () ->
+    _buffers = ['']
+    _buffers.push @application_context.encode()
+    for item in @presentation_context
+      _buffers.push item.encode()
+    # _buffers.push @user_information.encode()
+    _var_len = _buffers.reduce (b1, b2) ->
+      return b1.length + b2.length
+    _header = Buffer.concat([new Buffer([0x01, 0x00]), mk_uint32(66 + _var_len),
+                              # protocol version
+                              mk_uint16(1),
+                              # called & calling aet title
+                              new Buffer(printf("%-16s%-16s", @called_aet_title.substr(0,16),
+                                @calling_aet_title.substr(0,16)), 'binary'),
+                              # 32 reserved bytes
+                              ZERO_BUFF.slice(0, 32) ])
+    _buffers[0] = _header
+    return Buffer.concat(_buffers)
+
   to_json: () ->
     _json = super()
     _json.called_aet_title = @called_aet_title
@@ -145,18 +184,22 @@ class PDUAssociateRq extends PDU
 class Item extends PDU
   _json_name: false
 
-  constructor: (@_buff, @_start, @_end) ->
-    @decode()
-    delete @_buff
+  constructor: (buff_or_json, @_start, @_end) ->
+    super(buff_or_json)
+
   ui_str: (offset) ->
     _start = @_start + offset
     return trim_ui(@_buff.toString('binary', _start, @_end))
+  encode_value_str: () ->
+    return Buffer.concat [new Buffer([@type, 0]), mk_uint16(@value.length), new Buffer(@value, 'binary')]
 
 class ApplicationContextItem extends Item
   type: 0x10
   name: 'application_context'
   decode: () ->
     @value = @ui_str(4)
+  encode: () ->
+    return @encode_value_str()
 
 class PresentationContextItem extends Item
   type: 0x20
@@ -167,6 +210,18 @@ class PresentationContextItem extends Item
   decode: () ->
     @id = @_buff[@_start + 4]
     @decode_var_items(@_start + 8, @_end)
+  encode: () ->
+    _buffers = [
+      '',
+      new Buffer([@id, 0, 0, 0]),
+      @abstract_syntax.encode()
+      Buffer.concat(_ts.encode() for _ts in @transfer_syntax)
+    ]
+    _len = _buffers.reduce (b1, b2) -> b1.length + b2.length
+    _header = Buffer.concat([new Buffer([0x20, 0]), mk_uint16(_len)])
+    _buffers[0] = _header
+    return Buffer.concat(_buffers)
+
   to_json: () ->
     _json = super()
     _json.id = @id
@@ -177,12 +232,16 @@ class AbstractSyntaxItem extends Item
   name: 'abstract_syntax'
   decode: () ->
     @value = @ui_str(4)
+  encode: () ->
+    return @encode_value_str()
 
 class TransferSyntaxItem extends Item
   type: 0x40
   name: 'transfer_syntax'
   decode: () ->
     @value = @ui_str(4)
+  encode: () ->
+    return @encode_value_str()
 
 class UserInformationItem extends Item
   type: 0x50
@@ -270,14 +329,96 @@ ITEM_BY_TYPE =
   '54': ScpScuRoleSelectionItem
   '55': ImplementationVersionNameItem
 
+ITEM_BY_NAME =
+  'application_context': ApplicationContextItem
+  'presentation_context': PresentationContextItem
+  'abstract_syntax': AbstractSyntaxItem
+  'transfer_syntax': TransferSyntaxItem
+  'user_information': UserInformationItem
+  'maximum_length': MaximumLengthItem
+  'implementation_class_uid': ImplementationClassUidItem
+  'asynchronous_operations_window': AsynchronousOperationsWindowItem
+  'scp_scu_role_selection': ScpScuRoleSelectionItem
+  'implementation_version_name': ImplementationVersionNameItem
+
 item_constructor = (type) ->
   _hex = printf("%02X", type)
   return ITEM_BY_TYPE[_hex]
 
-module.exports = PDUDecoder
+
+exports.PDUDecoder = PDUDecoder
+
+
+ZERO_BUFF = new Buffer(128)
+
+##
+# PDUEncoder
+#
+# Tranform-Stream reading pdu js object
+# and emitting pdu buffer
+##
+class PDUEncoder extends stream.Transform
+  constructor: (options)->
+    if not (this instanceof PDUEncoder)
+      return new PDUEncoder(options)
+    super(options)
+    @_writableState.objectMode = true
+    @_readableState.objectMode = false
+
+  _transform: (pdu, _, cb) ->
+    try
+      __buff = pdu.encode()
+      log.trace({length: __buff.length}, "_transform: emitting pdu buffer")
+      @push __buff
+      cb()
+    catch err
+      log.error({error: err}, "_transform: error")
+      cb(err)
+
+  _flush: () ->
+    log.debug("_flush")
+
+mk_uint16 = (num) ->
+  _buff = new Buffer(2)
+  _buff.writeUInt16BE(num, 0)
+  return _buff
+mk_uint32 = (num) ->
+  _buff = new Buffer(4)
+  _buff.writeUInt32BE(num, 0)
+  return _buff
+
+
+exports.PDUEncoder = PDUEncoder
 
 
 if require.main is module
+  echo_json = {
+    "name": "association_rq",
+    "called_aet_title": "TESTME",
+    "calling_aet_title": "DCMECHO",
+    "application_context": "1.2.840.10008.3.1.1.1"
+    "presentation_context": [
+      "id": 1,
+      "abstract_syntax": "1.2.840.10008.1.1",
+      "transfer_syntax": ["1.2.840.10008.1.2"]]
+    "user_information":
+      "maximum_length": 16384
+      "implementation_class_uid": "1.2.40.0.13.1.1"
+      "asynchronous_operations_window":
+        "maximum_number_operations_invoked": 0
+        "maximum_number_operations_performed": 0
+      "implementation_version_name": "dcm4che-2.0"
+  }
+
+  _pdu = new PDUAssociateRq(echo_json)
+  console.log "pdu ==>", _pdu
+  _enc = new PDUEncoder()
+  _enc.on 'data', (buff) ->
+    console.log "BUFFER:", buff
+  _enc.write _pdu
+
+###
+if require.main is module and false
   net = require "net"
   server = net.createServer {}, (conn) ->
     log.info "connection"
@@ -286,3 +427,4 @@ if require.main is module
     conn.pipe new PDUDecoder()
   server.listen 11112, () ->
     log.info "server bound to port 11112"
+###
