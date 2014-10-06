@@ -2,10 +2,10 @@
 
 stream = require("stream")
 printf = require("printf")
-readbuffer = require("../readbuffer")
-vrs = require("../../lib/vrs")
+readbuffer = require("./readbuffer")
+vrs = require("../lib/vrs")
 
-log = require("../logger")('pdu', 'decoder')
+log = require("./logger")('pdu', 'decoder')
 
 ##
 # PDUDecoder

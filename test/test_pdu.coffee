@@ -1,6 +1,6 @@
 #! /usr/bin/env /coffee
 
-decoder = require "../lib/pdu/decoder"
+decoder = require "../lib/pdu"
 
 ECHO_RAW =[ 1, 0, 0, 0, 0, 197, 0, 1, 0, 0, 84, 69, 83,
             84, 77, 69, 32, 32, 32, 32, 32, 32, 32, 32, 32,
