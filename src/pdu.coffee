@@ -69,6 +69,7 @@ class PDU
       delete @_buff
     else
       @from_json buff_or_json
+    return this
 
   decode_var_items: (start, end) ->
     log.trace({start: start, end: end}, "PDU.decode_var_items") if log.trace()
@@ -135,11 +136,14 @@ class PDU
       _constr = ITEM_BY_NAME[_k]
       if not _constr?
         throw new vrs.DicomError "no such item: #{_k}"
+      log.trace {name: _k, count: _v, constr: _constr}, "named item"
       if _v == 1
         this[_k] = new _constr(json[_k])
       else
-        this[_k] = for _x in json
-          new _constr(_x[_k])
+        if json[_k]
+          this[_k] = for _x in json[_k]
+            new _constr(_x)
+      log.trace {json: json[_k], result: this[_k]}, "from json result"
     return
 
 class PDUAssociateRq extends PDU
@@ -181,10 +185,18 @@ class PDUAssociateRq extends PDU
     _json.calling_aet_title = @calling_aet_title
     return _json
 
+  from_json: (json) ->
+    @called_aet_title = json.called_aet_title
+    @calling_aet_title = json.calling_aet_title
+    return super(json)
+
 class Item extends PDU
   _json_name: false
 
-  constructor: (buff_or_json, @_start, @_end) ->
+  constructor: (buff_or_json, start, end) ->
+    if buff_or_json instanceof Buffer
+      @_start = start
+      @_end = end
     super(buff_or_json)
 
   ui_str: (offset) ->
@@ -196,6 +208,7 @@ class Item extends PDU
 class ApplicationContextItem extends Item
   type: 0x10
   name: 'application_context'
+  _single_value: true
   decode: () ->
     @value = @ui_str(4)
   encode: () ->
@@ -227,9 +240,14 @@ class PresentationContextItem extends Item
     _json.id = @id
     return _json
 
+  from_json: (json) ->
+    @id = json.id
+    return super(json)
+
 class AbstractSyntaxItem extends Item
   type: 0x30
   name: 'abstract_syntax'
+  _single_value: true
   decode: () ->
     @value = @ui_str(4)
   encode: () ->
@@ -238,6 +256,7 @@ class AbstractSyntaxItem extends Item
 class TransferSyntaxItem extends Item
   type: 0x40
   name: 'transfer_syntax'
+  _single_value: true
   decode: () ->
     @value = @ui_str(4)
   encode: () ->
@@ -258,12 +277,14 @@ class UserInformationItem extends Item
 class MaximumLengthItem extends Item
   type: 0x51
   name: 'maximum_length'
+  _single_value: true
   decode: () ->
     @value = @_buff.readUInt32BE(@_start + 4)
 
 class ImplementationClassUidItem extends Item
   type: 0x52
   name: 'implementation_class_uid'
+  _single_value: true
   decode: () ->
     @value = @ui_str(4)
 
@@ -299,6 +320,7 @@ class ScpScuRoleSelectionItem extends Item
 class ImplementationVersionNameItem extends Item
   type: 0x55
   name: 'implementation_version_name'
+  _single_value: true
   decode: () ->
     @value = @ui_str(4)
 
@@ -412,6 +434,7 @@ if require.main is module
 
   _pdu = new PDUAssociateRq(echo_json)
   console.log "pdu ==>", _pdu
+  console.dir _pdu.to_json()
   _enc = new PDUEncoder()
   _enc.on 'data', (buff) ->
     console.log "BUFFER:", buff

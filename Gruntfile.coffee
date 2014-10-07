@@ -4,6 +4,8 @@ srcDir = 'src'
 dstDir = 'lib'
 tstDir = 'test'
 
+sourceMap = false
+
 srcRe = new RegExp "^#{srcDir}/"
 
 module.exports = (grunt) ->
@@ -27,12 +29,16 @@ module.exports = (grunt) ->
         src: ['**/*.coffee'],
         dest: "#{dstDir}/",
         ext: '.js'
+        options:
+          sourceMap: sourceMap
       watched:
         expand: true,
         cwd: "#{srcDir}/",
         src: ['**/*.coffee'],
         dest: "#{dstDir}/",
         ext: '.js'
+        options:
+          sourceMap: sourceMap
 
     nodeunit:
       all: ["#{tstDir}/test_*.coffee"]
