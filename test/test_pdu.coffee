@@ -46,3 +46,15 @@ exports.PDUTest =
       test.deepEqual ECHO_PDU, pdu.to_json()
       test.done()
     _decoder.write(new Buffer(ECHO_RAW))
+
+  "test encoding echo association request": (test) ->
+    test.expect 1
+
+    _encoder = new pdu.PDUEncoder()
+    _encoder.on 'data', (buff) ->
+      _decoder = new pdu.PDUDecoder()
+      _decoder.on 'data', (pdu) ->
+        test.deepEqual ECHO_PDU, pdu.to_json()
+        test.done()
+      _decoder.write buff
+    _encoder.write new pdu.PDUAssociateRq(ECHO_PDU)

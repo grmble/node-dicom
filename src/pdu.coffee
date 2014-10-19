@@ -171,9 +171,10 @@ class PDUAssociateRq extends PDU
     _buffers.push @application_context.encode()
     for item in @presentation_context
       _buffers.push item.encode()
+    _buffers.push @user_information.encode()
     # _buffers.push @user_information.encode()
     _var_len = total_length(_buffers)
-    _header = Buffer.concat([new Buffer([0x01, 0x00]), mk_uint32(66 + _var_len),
+    _header = Buffer.concat([new Buffer([0x01, 0x00]), mk_uint32(68 + _var_len),
                               # protocol version
                               mk_uint16(1),
                               # reserved
@@ -208,8 +209,13 @@ class Item extends PDU
 
   ui_str: (offset) ->
     _start = @_start + offset
-    return trim_ui(@_buff.toString('binary', _start, @_end))
+    _str = @_buff.toString('binary', _start, @_end)
+    _ui = trim_ui(_str)
+    # log.trace(start: _start, end: @_end, str: _str, ui:_ui, length: @_buff.length, buff: @_buff.slice(_start, @_end), "ui_str")
+    return _ui
+
   encode_value_str: () ->
+    # log.trace(length: @value.length, value: @value, "encode_value_str")
     return Buffer.concat [new Buffer([@type, 0]), mk_uint16(@value.length), new Buffer(@value, 'binary')]
 
 class ApplicationContextItem extends Item
@@ -237,9 +243,7 @@ class PresentationContextItem extends Item
       @abstract_syntax.encode()
       Buffer.concat(_ts.encode() for _ts in @transfer_syntax)
     ]
-    log.trace(buffers: _buffers, "PresentationContextItem>encode")
     _len = total_length(_buffers)
-    log.trace(length: _len, "PresentationContextItem>encode")
     _header = Buffer.concat([new Buffer([0x20, 0]), mk_uint16(_len)])
     _buffers[0] = _header
     return Buffer.concat(_buffers)
@@ -282,6 +286,21 @@ class UserInformationItem extends Item
     scp_scu_role_selection: -1
   decode: () ->
     @decode_var_items(@_start + 4, @_end)
+  encode: () ->
+    _buffers = [
+      '',
+      @maximum_length.encode()
+      @implementation_class_uid.encode()
+      @asynchronous_operations_window.encode()
+    ]
+    if @scp_scu_role_selection
+      _buffers.push Buffer.concat(_rs.encode() for _rs in @scp_scu_role_selection)
+    _buffers.push @implementation_version_name.encode()
+    _len = total_length(_buffers)
+    _header = Buffer.concat([new Buffer([@type, 0]), mk_uint16(_len)])
+    _buffers[0] = _header
+    return Buffer.concat(_buffers)
+
 
 class MaximumLengthItem extends Item
   type: 0x51
@@ -289,6 +308,10 @@ class MaximumLengthItem extends Item
   _single_value: true
   decode: () ->
     @value = @_buff.readUInt32BE(@_start + 4)
+  encode: () ->
+    _vbuff = new Buffer(4)
+    _vbuff.writeUInt32BE(@value, 0)
+    return Buffer.concat [new Buffer([@type, 0]), mk_uint16(4), _vbuff]
 
 class ImplementationClassUidItem extends Item
   type: 0x52
@@ -296,6 +319,8 @@ class ImplementationClassUidItem extends Item
   _single_value: true
   decode: () ->
     @value = @ui_str(4)
+  encode: () ->
+    return @encode_value_str()
 
 class AsynchronousOperationsWindowItem extends Item
   type: 0x53
@@ -308,6 +333,16 @@ class AsynchronousOperationsWindowItem extends Item
     _json.maximum_number_operations_invoked = @maximum_number_operations_invoked
     _json.maximum_number_operations_performed = @maximum_number_operations_performed
     return _json
+  from_json: (json) ->
+    @maximum_number_operations_invoked = json.maximum_number_operations_invoked
+    @maximum_number_operations_performed = json.maximum_number_operations_performed
+    return super(json)
+  encode: () ->
+    _vbuff = new Buffer(4)
+    _vbuff.writeUInt16BE(@maximum_number_operations_invoked, 0)
+    _vbuff.writeUInt16BE(@maximum_number_operations_performed, 2)
+    return Buffer.concat [new Buffer([@type, 0]), mk_uint16(4), _vbuff]
+
 
 class ScpScuRoleSelectionItem extends Item
   type: 0x54
@@ -325,6 +360,25 @@ class ScpScuRoleSelectionItem extends Item
     _json.scu_role = @scu_role
     _json.scp_role = @scp_role
     return _json
+  from_json: (json) ->
+    @sop_class_uid = json.sop_class_uid
+    @scu_role = json.scu_role
+    @scp_reole = json.scp_role
+    return super(json)
+  encode: () ->
+    _buffers = [
+      '',
+      mk_uint16(@sop_class_uid.length)
+      new Buffer(@sop_class_uid, 'binary')
+      new Buffer([@scu_role, @scp_role])
+    ]
+    _len = total_length(_buffers)
+    _header = Buffer.concat([new Buffer([@type, 0]), mk_uint16(_len)])
+    _buffers[0] = _header
+    # log.trace(buffers: _buffers, "ScpScuRoleSelection>>encode")
+    return Buffer.concat(_buffers)
+
+
 
 class ImplementationVersionNameItem extends Item
   type: 0x55
@@ -332,6 +386,8 @@ class ImplementationVersionNameItem extends Item
   _single_value: true
   decode: () ->
     @value = @ui_str(4)
+  encode: () ->
+    return @encode_value_str()
 
 trim_ui = (str) ->
   _len = str.length
@@ -339,7 +395,6 @@ trim_ui = (str) ->
     str.slice(0, -1)
   else
     str
-
 
 PDU_BY_TYPE =
   '01': PDUAssociateRq
@@ -375,10 +430,6 @@ ITEM_BY_NAME =
 item_constructor = (type) ->
   _hex = printf("%02X", type)
   return ITEM_BY_TYPE[_hex]
-
-
-exports.PDUDecoder = PDUDecoder
-
 
 ZERO_BUFF = new Buffer(128)
 
@@ -418,8 +469,9 @@ mk_uint32 = (num) ->
   _buff.writeUInt32BE(num, 0)
   return _buff
 
-
+exports.PDUDecoder = PDUDecoder
 exports.PDUEncoder = PDUEncoder
+exports.PDUAssociateRq = PDUAssociateRq
 
 
 if require.main is module
@@ -443,13 +495,13 @@ if require.main is module
 
   _pdu = new PDUAssociateRq(echo_json)
   console.log "pdu ==>", _pdu
-  console.dir _pdu.to_json()
+  console.log "PDU JSON:", JSON.stringify(_pdu.to_json(), null, 4)
   _enc = new PDUEncoder()
   _enc.on 'data', (buff) ->
     console.log "BUFFER:", buff
     _dec = new PDUDecoder()
     _dec.on 'data', (pdu) ->
-      console.log "encoded/decoded pdu", pdu.to_json()
+      console.log "encoded/decoded pdu", JSON.stringify(pdu.to_json(), null, 4)
     _dec.write buff
     _dec.end()
   _enc.write _pdu
