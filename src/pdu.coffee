@@ -7,6 +7,12 @@ vrs = require("../lib/vrs")
 
 log = require("./logger")('pdu')
 
+# helper: total length for array of buffers
+total_length = (arr) ->
+  arr.reduce((sum, buff) ->
+    return sum + buff.length
+  , 0)
+
 ##
 # PDUDecoder
 #
@@ -166,11 +172,12 @@ class PDUAssociateRq extends PDU
     for item in @presentation_context
       _buffers.push item.encode()
     # _buffers.push @user_information.encode()
-    _var_len = _buffers.reduce (b1, b2) ->
-      return b1.length + b2.length
+    _var_len = total_length(_buffers)
     _header = Buffer.concat([new Buffer([0x01, 0x00]), mk_uint32(66 + _var_len),
                               # protocol version
                               mk_uint16(1),
+                              # reserved
+                              new Buffer([0x00, 0x00]),
                               # called & calling aet title
                               new Buffer(printf("%-16s%-16s", @called_aet_title.substr(0,16),
                                 @calling_aet_title.substr(0,16)), 'binary'),
@@ -230,7 +237,9 @@ class PresentationContextItem extends Item
       @abstract_syntax.encode()
       Buffer.concat(_ts.encode() for _ts in @transfer_syntax)
     ]
-    _len = _buffers.reduce (b1, b2) -> b1.length + b2.length
+    log.trace(buffers: _buffers, "PresentationContextItem>encode")
+    _len = total_length(_buffers)
+    log.trace(length: _len, "PresentationContextItem>encode")
     _header = Buffer.concat([new Buffer([0x20, 0]), mk_uint16(_len)])
     _buffers[0] = _header
     return Buffer.concat(_buffers)
@@ -438,6 +447,11 @@ if require.main is module
   _enc = new PDUEncoder()
   _enc.on 'data', (buff) ->
     console.log "BUFFER:", buff
+    _dec = new PDUDecoder()
+    _dec.on 'data', (pdu) ->
+      console.log "encoded/decoded pdu", pdu.to_json()
+    _dec.write buff
+    _dec.end()
   _enc.write _pdu
 
 ###
