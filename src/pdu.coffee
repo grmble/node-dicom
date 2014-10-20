@@ -198,6 +198,8 @@ class PDUAssociateRq extends PDU
     @calling_aet_title = json.calling_aet_title
     return super(json)
 
+class PDUAssociateAc extends PDUAssociateRq
+
 class Item extends PDU
   _json_name: false
 
@@ -239,7 +241,7 @@ class PresentationContextItem extends Item
   encode: () ->
     _buffers = [
       '',
-      new Buffer([@id, 0, 0, 0]),
+      @fixed_fields(),
       @abstract_syntax.encode()
       Buffer.concat(_ts.encode() for _ts in @transfer_syntax)
     ]
@@ -247,6 +249,9 @@ class PresentationContextItem extends Item
     _header = Buffer.concat([new Buffer([0x20, 0]), mk_uint16(_len)])
     _buffers[0] = _header
     return Buffer.concat(_buffers)
+
+  fixed_fields: () ->
+    new Buffer([@id, 0, 0, 0])
 
   to_json: () ->
     _json = super()
@@ -256,6 +261,23 @@ class PresentationContextItem extends Item
   from_json: (json) ->
     @id = json.id
     return super(json)
+
+class PresentationContextItemAc extends PresentationContextItem
+  type: 0x21
+  name: 'presentation_context_ac'
+  decode: () ->
+    super()
+    @resultReason = @_buff[@_start + 6]
+  fixed_fields: () ->
+    new Buffer([@id, 0, @resultReason, 0])
+  to_json: () ->
+    _json = super()
+    _json.resultReason = @resultReason
+    return _json
+  from_json: (json) ->
+    @resultReason = json.resultReason
+    return super(json)
+
 
 class AbstractSyntaxItem extends Item
   type: 0x30
@@ -398,14 +420,24 @@ trim_ui = (str) ->
 
 PDU_BY_TYPE =
   '01': PDUAssociateRq
+  '02': PDUAssociateAc
+
+PDU_BY_NAME =
+  'association_rq': PDUAssociateRq
+  'association_ac': PDUAssociateAc
 pdu_constructor = (type) ->
   _hex = printf("%02X", type)
   return PDU_BY_TYPE[_hex]
+pdu_by_name = (arg) ->
+  if arg instanceof PDU
+    return arg
+  return new (PDU_BY_NAME[arg.name])(arg)
 
 
 ITEM_BY_TYPE =
   '10': ApplicationContextItem
   '20': PresentationContextItem
+  '21': PresentationContextItemAc
   '30': AbstractSyntaxItem
   '40': TransferSyntaxItem
   '50': UserInformationItem
@@ -418,6 +450,7 @@ ITEM_BY_TYPE =
 ITEM_BY_NAME =
   'application_context': ApplicationContextItem
   'presentation_context': PresentationContextItem
+  'presentation_context_ac': PresentationContextItemAc
   'abstract_syntax': AbstractSyntaxItem
   'transfer_syntax': TransferSyntaxItem
   'user_information': UserInformationItem
@@ -449,7 +482,7 @@ class PDUEncoder extends stream.Transform
 
   _transform: (pdu, _, cb) ->
     try
-      __buff = pdu.encode()
+      __buff = pdu_by_name(pdu).encode()
       log.trace({length: __buff.length}, "_transform: emitting pdu buffer")
       @push __buff
       cb()
@@ -474,46 +507,56 @@ exports.PDUEncoder = PDUEncoder
 exports.PDUAssociateRq = PDUAssociateRq
 
 
-if require.main is module
-  echo_json = {
-    "name": "association_rq",
-    "called_aet_title": "TESTME",
-    "calling_aet_title": "DCMECHO",
-    "application_context": "1.2.840.10008.3.1.1.1"
-    "presentation_context": [
-      "id": 1,
-      "abstract_syntax": "1.2.840.10008.1.1",
-      "transfer_syntax": ["1.2.840.10008.1.2"]]
-    "user_information":
-      "maximum_length": 16384
-      "implementation_class_uid": "1.2.40.0.13.1.1"
-      "asynchronous_operations_window":
-        "maximum_number_operations_invoked": 0
-        "maximum_number_operations_performed": 0
-      "implementation_version_name": "dcm4che-2.0"
-  }
 
-  _pdu = new PDUAssociateRq(echo_json)
-  console.log "pdu ==>", _pdu
-  console.log "PDU JSON:", JSON.stringify(_pdu.to_json(), null, 4)
+net = require 'net'
+
+echo_scu = (opts, cb) ->
+  _aet = opts.aet
+  _local = opts.local_aet
+  _conn = net.connect opts, () ->
+    console.log "connected to", opts
+    _enc.write {
+      "name": "association_rq",
+      "called_aet_title": _aet,
+      "calling_aet_title": _local,
+      "application_context": "1.2.840.10008.3.1.1.1"
+      "presentation_context": [
+        "id": 1,
+        "abstract_syntax": "1.2.840.10008.1.1",
+        "transfer_syntax": ["1.2.840.10008.1.2"]]
+      "user_information":
+        "maximum_length": 16384
+        # "implementation_class_uid": "1.2.40.0.13.1.1" # dcm4chee
+        "implementation_class_uid": "1.2.40.0.13.1.1.47"
+        "asynchronous_operations_window":
+          "maximum_number_operations_invoked": 0
+          "maximum_number_operations_performed": 0
+        "implementation_version_name": "node-dicom"
+    }
+
   _enc = new PDUEncoder()
-  _enc.on 'data', (buff) ->
-    console.log "BUFFER:", buff
-    _dec = new PDUDecoder()
-    _dec.on 'data', (pdu) ->
-      console.log "encoded/decoded pdu", JSON.stringify(pdu.to_json(), null, 4)
-    _dec.write buff
-    _dec.end()
-  _enc.write _pdu
+  _dec = new PDUDecoder()
+  _enc.pipe _conn
+  _conn.pipe _dec
+  # _conn.on 'data', (data) ->
+  #   require('fs').writeFileSync("/tmp/x.x", data)
 
-###
-if require.main is module and false
-  net = require "net"
-  server = net.createServer {}, (conn) ->
-    log.info "connection"
-    conn.on 'end', () ->
-      log.info "connection end"
-    conn.pipe new PDUDecoder()
-  server.listen 11112, () ->
-    log.info "server bound to port 11112"
-###
+  _conn.on 'error', cb
+  _enc.on 'error', cb
+  _dec.on 'error', cb
+
+  _dec.on 'data', (data) ->
+    console.log "RECEIVED:", JSON.stringify(data, null, 2)
+
+
+if require.main is module
+  if true
+    echo_scu host: "192.168.2.19", port: 11112, aet: "TESTME", local_aet: "XXX", (err, data) ->
+      if err
+        console.log "ERROR: ", err
+        console.log "stack:", err.stack
+        process.exit(1)
+      console.log "DATA:", data
+  if false
+    require('fs').createReadStream("/tmp/x.x")
+    .pipe new PDUDecoder()
