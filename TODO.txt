@@ -1,5 +1,7 @@
+(A) empty element decoding for non-stringlike VRs
 (B) Documentation (ronn?), installation +Docs
 (B) Implement Encoder +Encoder
+(B) empty element encoding
 (C) JsonSource: handle InlineBinary
 (C) Encoder: use encoder context, not vr passed in from whatever source
 (C) Test BigEndian explicit length sequence/items

@@ -2,6 +2,6 @@
 
 exports.uids = require('./lib/uids');
 exports.tags = require('./lib/tags');
-exports.vr = require('./lib/vrs');
+exports.vrs = require('./lib/vrs');
 exports.decoder = require('./lib/decoder');
 exports.json = require('./lib/json');

@@ -702,6 +702,8 @@ class Stringish extends VR
     if not @buffer?
       return undefined
     s = iconv.decode(@buffer, @context.charset)
+    if s.length == 0
+      return []
     if _ends_with s, @padding_character
       s = s.slice(0, -1)
     if @allow_multiple_values

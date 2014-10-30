@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 #
 
+log = require("./logger")("readbuffer")
+
 ##
 # ReadBuffer for TransformStream
 #
@@ -50,8 +52,11 @@ class ReadBuffer
   # will consume exactly bytes
   # only call this if the buffer has bytes
   consume: (bytes) ->
+    # log.trace @log_summary(), "consume" if log.trace()
     if not @has(bytes)
       throw new NeedMoreInput(bytes)
+    if bytes == 0
+      return new Buffer(0)
     end = @offset + bytes
     buff = @buffers[0]
     # easy/fast case: first buffer sufficient

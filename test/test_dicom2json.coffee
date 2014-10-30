@@ -168,3 +168,22 @@ exports.Dicom2JsonTest =
 
 
 
+EMPTY_AT_EOF = """CAAFAENTCgBJU09fSVIgMTkyCAAgAERBAAAIADAAVE0AAAgAUABTSAAACABSAENTBgBTVFVEWSAI
+AGEAQ1MAAAgAYgBVSQAACACQAFBOAAAIADAQTE8AABAAEABQTgAAEAAgAExPAAAQACEATE8AABAA
+MABEQQAAEAAyAFRNAAAQAEAAQ1MAACAADQBVSQAAIAAQAFNIAAAgAAASSVMAACAAAhJJUwAAIAAE
+EklTAAAgAAYSSVMAACAACBJJUwAA"""
+
+exports.EmptyElementAtBufferEndTest =
+  "test empty element at buffer end": (test) ->
+    test.expect 4
+    _buff = new Buffer(EMPTY_AT_EOF, "base64")
+    _dec = json.decoder2json transfer_syntax: 'ExplicitVRLittleEndian', (err, _json) ->
+      throw err if err
+      console.log "RESULT:", _json
+      test.ok _json, "Test that we got a djm result"
+      # test that we parsed a valueless element
+      test.deepEqual [], json.get_values(_json, tags.NumberOfStudyRelatedInstances)
+      test.equal null, json.get_value(_json, tags.NumberOfStudyRelatedInstances)
+      test.equal null, json.get_value(_json, tags.PatientName)
+      test.done()
+    _dec.end(_buff)

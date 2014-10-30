@@ -104,6 +104,20 @@ gunzip2json = (fn, cb) ->
   .pipe new JsonSink(cb)
   .on 'error', cb
 
+
+# make a decoder piping into json sink
+# errors are correctly chained,
+# returns the DECODER
+# options: transfer_syntax (for decoder), bulkdata_uri for encoder
+decoder2json = (opts, cb) ->
+  _dec = new decoder(opts)
+  _dec.on 'error', cb
+  .pipe new JsonEncoder(opts)
+  .on 'error', cb
+  .pipe new JsonSink(cb)
+  .on 'error', cb
+  return _dec
+
 exports.get_element = get_element
 exports.get_values = get_values
 exports.get_value = get_value
@@ -112,6 +126,7 @@ exports.file2jsonstream = file2jsonstream
 exports.gunzip2jsonstream = gunzip2jsonstream
 exports.file2json = file2json
 exports.gunzip2json = gunzip2json
+exports.decoder2json = decoder2json
 
 
 _err_cb = (err) ->

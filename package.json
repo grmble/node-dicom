@@ -18,6 +18,7 @@
   "scripts": {
     "build": "coffee --compile --output lib/ src/",
     "prepublish": "coffee --compile --output lib/ src/",
+    "postinstall": "test -d lib || coffee --compile --output lib/ src/",
     "test": "nodeunit test"
   },
   "engines": {
