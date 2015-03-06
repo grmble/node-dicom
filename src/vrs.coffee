@@ -947,6 +947,9 @@ for_name = (name, ctx, buffer, values) ->
   if name == 'OB or OW'
     log.debug({vr: 'OW'}, "for_name: using OW for 'OB or OW'") if log.debug()
     name = 'OW'
+  if name == 'US or SS'
+    log.debug({vr: 'SS'}, "for_name: using SS for 'US or SS'") if log.debug()
+    name = 'SS'
   constr_fn = _VR_DICT[name]
   if not constr_fn?
     throw new DicomError("Unknown VR: #{name}")
