@@ -1,11 +1,14 @@
-(A) empty element decoding for non-stringlike VRs
-(B) Documentation (ronn?), installation +Docs
-(B) Implement Encoder +Encoder
-(B) empty element encoding
-(C) JsonSource: handle InlineBinary
-(C) Encoder: use encoder context, not vr passed in from whatever source
-(C) Test BigEndian explicit length sequence/items
-(D) Implement Dataset +Dataset +DoWeNeedThis
-(D) Support multi-valued 0008,0005 + charset extension
-(D) undefined instead of 'undefined' for undefined VR elements +Decoder
+(W) empty element decoding for non-stringlike VRs
+(X) Documentation (ronn?), installation +Docs
+(X) Implement Encoder +Encoder
+(X) empty element encoding
+(Y) JsonSource: handle InlineBinary
+(Y) Encoder: use encoder context, not vr passed in from whatever source
+(Y) Test BigEndian explicit length sequence/items
+(Z) Implement Dataset +Dataset +DoWeNeedThis
+(Z) Support multi-valued 0008,0005 + charset extension
+(Z) undefined instead of 'undefined' for undefined VR elements +Decoder
 Endianess changes for OW/OF +DoWeNeedThis +BigEndianRetired
+
+x (A) do not trust metadata content group length
+x (A) end_sequence triggered too early for defined-length sequence with one empty item

@@ -329,7 +329,7 @@ _iconv_charset = (spec_cs) ->
       return spec_cs
 
 ##
-# 
+#
 # DicomEvent for emittings
 #
 ##
@@ -360,7 +360,7 @@ class VR
 
   explicit_value_length_bytes: 2
   implicit_value_length_bytes: 4
-  
+
   base64_values: false
 
   # Initialize the VR. Either a buffer or parsed values must be given
@@ -434,7 +434,7 @@ class VR
       decoder.log_and_push obj
     else
       @stream_element(element, readbuffer, decoder, start_position, value_length)
-  
+
   # stream the element out (well, the byte buffers anyway)
   stream_element: (element, readbuffer, decoder, start_position, value_length) ->
     bd_offset = decoder.buffer.stream_position
@@ -485,7 +485,7 @@ class FixedLength extends VR
 ##
 #
 # Dicom AT (=dAta element Tag).
-# 
+#
 # encoded as 2 consecutive 16 bit unsigneds giving the group/element of
 # a dicom tag.  The value is represented as a single tag number.
 ##
@@ -587,7 +587,7 @@ class OtherVR extends FixedLength
 
 
 ##
-# 
+#
 # Dicom OB (= Other Byte)
 #
 ##
@@ -671,7 +671,7 @@ class SQ extends VR
     log.debug({length: value_length}, "SQ consume and emit") if log.debug()
     end_position = undefined
     if value_length != UNDEFINED_LENGTH
-      end_position = start_position + value_length
+      end_position = readbuffer.stream_position + value_length
     end_cb = () ->
       _obj = new DicomEvent(element, this, start_position, "end_sequence")
       decoder.log_and_push _obj

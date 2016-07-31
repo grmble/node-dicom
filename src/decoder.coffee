@@ -82,39 +82,32 @@ class Decoder extends stream.Transform
     log.debug {state: state}, "switching state: #{msg} ==> #{state}"
     @state = state
 
+  _metainfo_done_cb: () =>
+    log.debug "metainfo callback, setting metainfo_done"
+    @metainfo_done = true
+    @_switch_state @_decode_dataset, "metainfo done, decoding dataset"
+    if @metainfo_listener
+      @removeListener 'data', @metainfo_listener
+      @metainfo_listener = undefined
+    log.debug "ts=#{@metainfo_ts}"
+    ts = uids.for_uid(@metainfo_ts)
+    log.debug {ts: ts}, "_decode_metainfo: switching transfer syntax"
+    @context.replace_root(ts.make_context())
+
   _decode_metainfo: () =>
-    if not @metainfo_length
+    if not @metainfo_ts
       @saved = @buffer.copy()
       start_pos = @buffer.stream_position
       @metainfo_done = false
-
-      metainfo_cb = () =>
-        log.debug "metainfo callback, setting metainfo_done"
-        @metainfo_done = true
-        @_switch_state @_decode_dataset, "metainfo done, decoding dataset"
-        if @metainfo_listener
-          log.debug "asdf"
-          @removeListener 'data', @metainfo_listener
-          @metainfo_listener = undefined
-          log.debug "jkl"
-        log.debug "ts=#{@metainfo_ts}"
-        ts = uids.for_uid(@metainfo_ts)
-        log.debug {ts: ts}, "_decode_metainfo: switching transfer syntax"
-        @context.replace_root(ts.make_context())
 
       @metainfo_listener = (event) =>
         if event.element.tag == 0x00020010
           @metainfo_ts = event.vr.value()
           log.debug {ts: @metainfo_ts}, "metainfo transfer syntax found"
-        else if event.element.tag == 0x00020000
-          @metainfo_length = event.vr.value()
-          log.debug {length: @metainfo_length}, "metainfo length found"
-          @context.push({}, start_pos + @metainfo_length, metainfo_cb)
       @on 'data', @metainfo_listener
 
     while not @metainfo_done
-      @_decode_dataelement()
-    log.debug("breaking out of metainfo loop")
+      @_decode_metaelement()
 
     @_decode_dataset()
 
@@ -123,6 +116,31 @@ class Decoder extends stream.Transform
       @_decode_dataelement()
     return undefined
 
+  # decode metaelement - only for group 0002
+  _decode_metaelement: () =>
+    @saved = @buffer.copy()
+    log.trace({buffer: @saved.log_summary()}, "_decode_metaelement: saved buffer state") if log.trace()
+    element_position = @buffer.stream_position
+    @context.handle_autopops(element_position)
+    tag = (new vrs.AT(@context.top())).consume_value(@buffer)
+    log.debug({tag: printf("%08x", tag)}, "decoded tag") if log.debug()
+    tag_str = printf("%08X", tag)
+    # end of metadata is indicated by tag not in group 0002
+    group_str = tag_str.substr(0, 4)
+    if group_str != "0002"
+      log.debug({tag: tag_str}, "end of metainfo")
+      @buffer = @saved
+      return @_metainfo_done_cb()
+    # comparing tags somehow does not work ...
+    switch tag_str
+      when tags.Item.mask
+        @_handle_item(tag, element_position)
+      when tags.ItemDelimitationItem.mask
+        @_handle_itemdelimitation(tag, element_position)
+      when tags.SequenceDelimitationItem.mask
+        @_handle_sequencedelimitation(tag, element_position)
+      else
+        @_handle_element(tag, element_position)
 
   _decode_dataelement: () =>
     @saved = @buffer.copy()
@@ -161,7 +179,7 @@ class Decoder extends stream.Transform
         log.error {error: err}, "_action_wrapper:  emitting error"
         @emit 'error', err
 
-  ## 
+  ##
   # try to guess the format
   # DICM at offset 128+ => header present
   # file starts with: 0800 0500 4353 ==> SpecificCharacterSet, ExplicitVRLittleEndian
@@ -184,7 +202,7 @@ class Decoder extends stream.Transform
       @buffer = @saved
       return @_decode_dataset()
     throw new vrs.DicomError("Unable to guess DICOM encoding")
-    
+
   _decode_datafile: () =>
     @_switch_state @_decode_datafile, "decoding preamble/header"
     @saved = @buffer.copy()
@@ -289,4 +307,3 @@ module.exports = Decoder
 if require.main is module
   fs.createReadStream process.argv[2] #, {highWaterMark: 32}
   .pipe new Decoder {guess_header: true}
-
