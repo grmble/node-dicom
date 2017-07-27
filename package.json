@@ -6,7 +6,7 @@
     "DICOM"
   ],
   "license": "MIT",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "repository": {
     "type": "git",
     "url": "git@github.com:grmble/node-dicom.git"
@@ -18,7 +18,6 @@
   "scripts": {
     "build": "coffee --compile --output lib/ src/",
     "prepublish": "coffee --compile --output lib/ src/",
-    "postinstall": "test -d lib || coffee --compile --output lib/ src/",
     "test": "nodeunit test"
   },
   "engines": {
