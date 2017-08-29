@@ -6,7 +6,7 @@ Node.js DICOM
 The package provides the following:
 
 * Data dictionary according to the 2014a standard.
-* Streaming DICOM Decoder that reads a DICOM stream end
+* Streaming DICOM Decoder that reads a DICOM stream and
   emits DicomEvent instances.
 * Streaming JSON Encoder that turns a DicomEvent stream
   into a DICOM JSON Model
