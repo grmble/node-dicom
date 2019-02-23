@@ -101,7 +101,7 @@ class Decoder extends stream.Transform
       @metainfo_done = false
 
       @metainfo_listener = (event) =>
-        if event.element.tag == 0x00020010
+        if event && event.element && event.element.tag == 0x00020010
           @metainfo_ts = event.vr.value()
           log.debug {ts: @metainfo_ts}, "metainfo transfer syntax found"
       @on 'data', @metainfo_listener
