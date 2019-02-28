@@ -17,7 +17,7 @@ bunyan = require "bunyan"
 ##
 ENV_PREFIX = "NDCM"
 DEFAULTS =
-  'level': 'info'
+  'LEVEL': 'info'
 STREAM_DICT =
   'process.stdout': process.stdout,
   'process.stderr': process.stderr
