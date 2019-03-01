@@ -34,57 +34,70 @@ Limitations:
   do not provide a way to interpret the data,
   i.e. it's just passed on as a byte array, unchanged.
 
+Documentation:
+--------------
+
+There is documentation for the various pieces in the doc directory.
+Most notably:
+
+* [DICOM Decoder](https://github.com/grmble/node-dicom/blob/master/doc/dicom-decoder.md)
+* [DICOM JSON Model Utilities](https://github.com/grmble/node-dicom/blob/master/doc/dicom-json.md)
+
 Examples:
 ---------
 
 Read a DICOM file, produce JSON Model, and print some data:
 
-    dicom = require "dicom"
+```coffescript
+dicom = require "dicom"
 
-    decoder = dicom.decoder {guess_header: true}
-    encoder = new dicom.json.JsonEncoder()
-    sink = new dicom.json.JsonSink (err, json) ->
-      if err
-        console.log "Error:", err
-        process.exit 10
-      print_element json, dicom.tags.PatientID
-      print_element json, dicom.tags.IssuerOfPatientID
-      print_element json, dicom.tags.StudyInstanceUID
-      print_element json, dicom.tags.AccessionNumber
+decoder = dicom.decoder {guess_header: true}
+encoder = new dicom.json.JsonEncoder()
+sink = new dicom.json.JsonSink (err, json) ->
+  if err
+    console.log "Error:", err
+    process.exit 10
+  print_element json, dicom.tags.PatientID
+  print_element json, dicom.tags.IssuerOfPatientID
+  print_element json, dicom.tags.StudyInstanceUID
+  print_element json, dicom.tags.AccessionNumber
 
-    print_element = (json, path...) ->
-      console.log dicom.json.get_value(json, path...)
+print_element = (json, path...) ->
+  console.log dicom.json.get_value(json, path...)
 
-    require("fs").createReadStream(process.argv[2]).pipe decoder
-    .pipe encoder
-    .pipe sink
+require("fs").createReadStream(process.argv[2]).pipe decoder
+  .pipe encoder
+  .pipe sink
+```
 
 
 And the same thing in Javascript:
 
-    "use strict";
+```javascript
+"use strict";
 
-    var dicom = require("dicom");
+var dicom = require("dicom");
 
-    var decoder = dicom.decoder({
-        guess_header: true
-    });
+var decoder = dicom.decoder({
+    guess_header: true
+});
 
-    var encoder = new dicom.json.JsonEncoder();
+var encoder = new dicom.json.JsonEncoder();
 
-    var print_element = function(json, elem) {
-        console.log(dicom.json.get_value(json, elem));
-    };
+var print_element = function(json, elem) {
+    console.log(dicom.json.get_value(json, elem));
+};
 
-    var sink = new dicom.json.JsonSink(function(err, json) {
-        if (err) {
-          console.log("Error:", err);
-          process.exit(10);
-        }
-        print_element(json, dicom.tags.PatientID);
-        print_element(json, dicom.tags.IssuerOfPatientID);
-        print_element(json, dicom.tags.StudyInstanceUID);
-        print_element(json, dicom.tags.AccessionNumber);
-    });
+var sink = new dicom.json.JsonSink(function(err, json) {
+    if (err) {
+      console.log("Error:", err);
+      process.exit(10);
+    }
+    print_element(json, dicom.tags.PatientID);
+    print_element(json, dicom.tags.IssuerOfPatientID);
+    print_element(json, dicom.tags.StudyInstanceUID);
+    print_element(json, dicom.tags.AccessionNumber);
+});
 
-    require("fs").createReadStream(process.argv[2]).pipe(decoder).pipe(encoder).pipe(sink);
+require("fs").createReadStream(process.argv[2]).pipe(decoder).pipe(encoder).pipe(sink);
+```
