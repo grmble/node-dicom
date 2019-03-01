@@ -48,7 +48,7 @@ Examples:
 
 Read a DICOM file, produce JSON Model, and print some data:
 
-```coffescript
+```coffeescript
 dicom = require "dicom"
 
 decoder = dicom.decoder {guess_header: true}

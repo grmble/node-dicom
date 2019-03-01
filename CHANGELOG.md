@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Decoding File Metainfo with the Transfer Syntax UID not in the first chunk produced an error. By [@mch](https://github.com/mch)
 
+### Added
+-  CHANGELOG.md, link to documentation in README
+
 ## [0.4.3] - 2017-07-27
 ### Fixed
 - Postinstall did not work on windows.
@@ -21,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for VR US, by [@soichih] (https://github.com/soichih).
 
 ## [0.4.0] - 2014-10-30
-
 ### Fixed
 - Handling of empty elements at end of buffer
 
