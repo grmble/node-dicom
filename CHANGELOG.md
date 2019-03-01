@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+No unreleased changes.
+
+## [0.4.4] - 2019-03-01
 ### Fixed
 - Decoding File Metainfo with the Transfer Syntax UID not in the first chunk produced an error. By [@mch](https://github.com/mch)
 
@@ -33,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Incomplete PDU Encoder/Decoder.  Stopped working on this because of QIDO-RS - I did not need this anymore.
 - Possibly incomplete DICOM encoder. Was needed for PDU Encoder, status questionable but maybe useful to some.
 
-[Unreleased]: https://github.com/grmble/node-dicom/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/grmble/node-dicom/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/grmble/node-dicom/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/grmble/node-dicom/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/grmble/node-dicom/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/grmble/node-dicom/compare/v0.4.0...v0.4.1
