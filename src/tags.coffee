@@ -102,8 +102,8 @@ find = (regex) ->
       console.log el
   undefined
 
-add_tag = (tag, name, vr, vm, mask, retired) ->
-  new_tag = new Element(tag, name, vr, vm, mask, retired)
+add_tag = (name, vr, vm, mask, retired) ->
+  new_tag = new Element(parseInt(mask, 16), name, vr, vm, mask, retired)
   exports[name] = new_tag
   _TAG_DICT[mask] = new_tag
   return new_tag

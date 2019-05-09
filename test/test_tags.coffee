@@ -20,7 +20,7 @@ exports.TagsTest =
     test.done()
 
   "test private tag": (test) ->
-    test.expect 5
+    test.expect 6
     el = tags.for_tag(0x00090010)
     test.equal 'LO', el.vr
     el = tags.for_tag(0x000900FF)
@@ -34,9 +34,10 @@ exports.TagsTest =
 
     # ensure that we're able to extract information about a private tag
     # once it's been added to the dictionary
-    tags.add_tag(590080, 'StudyEdgeID', 'UI', '1', '00090100', false);
+    tags.add_tag('MyPrivateTag', 'UI', '1', '00090100', false);
     el = tags.for_tag(0x00090100)
     test.equal 'UI', el.vr
+    test.equal 590080, el.tag
 
     test.done()
 
