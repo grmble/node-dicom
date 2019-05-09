@@ -20,7 +20,7 @@ exports.TagsTest =
     test.done()
 
   "test private tag": (test) ->
-    test.expect 4
+    test.expect 5
     el = tags.for_tag(0x00090010)
     test.equal 'LO', el.vr
     el = tags.for_tag(0x000900FF)
@@ -31,6 +31,13 @@ exports.TagsTest =
     # so there is no private tag creator of type LO
     el = tags.for_tag(0x00070010)
     test.equal 'UN', el.vr
+
+    # ensure that we're able to extract information about a private tag
+    # once it's been added to the dictionary
+    tags.add_tag(590080, 'StudyEdgeID', 'UI', '1', '00090100', false);
+    el = tags.for_tag(0x00090100)
+    test.equal 'UI', el.vr
+
     test.done()
 
   "test group length tag": (test) ->
