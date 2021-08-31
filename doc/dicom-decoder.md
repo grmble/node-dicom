@@ -1,11 +1,11 @@
 dicom.decoder(3) - Dicom Decoder
 ================================
 
-##SYNOPSIS
+## SYNOPSIS
 
     var decoder = dicom.decoder(options);
 
-##DESCRIPTION
+## DESCRIPTION
 
 `dicom.decoder` is a transform stream that takes a DICOM file
 and outputs `DicomEvent`s.
@@ -27,6 +27,6 @@ Valid options are:
   if that fails it will try to recognize a `SpecificCharacterSet` tag
   at the start of the file.
 
-##SEE ALSO
+## SEE ALSO
 * dicom.json.encoder
 * dicom.encoder
